@@ -1,0 +1,226 @@
+city,state,animal,terrain,traffic,school,crime
+Delhi,Delhi,0,0,2,2,2
+Delhi Urban,Delhi,0,0,2,2,2
+Delhi Rural,Delhi,0,0,2,2,2
+Mumbai,Maharashtra,0,0,2,2,2
+Mumbai Urban,Maharashtra,0,0,2,2,2
+Mumbai Rural,Maharashtra,0,0,2,2,2
+Pune,Maharashtra,1,0,1,1,1
+Pune Urban,Maharashtra,1,0,1,1,1
+Pune Rural,Maharashtra,1,0,1,1,1
+Nagpur,Maharashtra,1,0,1,1,1
+Nagpur Urban,Maharashtra,1,0,1,1,1
+Nagpur Rural,Maharashtra,1,0,1,1,1
+Nashik,Maharashtra,1,0,1,1,1
+Nashik Urban,Maharashtra,1,0,1,1,1
+Nashik Rural,Maharashtra,1,0,1,1,1
+Aurangabad,Maharashtra,1,0,1,1,1
+Aurangabad Urban,Maharashtra,1,0,1,1,1
+Aurangabad Rural,Maharashtra,1,0,1,1,1
+Thane,Maharashtra,1,0,1,1,1
+Thane Urban,Maharashtra,1,0,1,1,1
+Thane Rural,Maharashtra,1,0,1,1,1
+Bangalore,Karnataka,0,0,2,2,2
+Bangalore Urban,Karnataka,0,0,2,2,2
+Bangalore Rural,Karnataka,0,0,2,2,2
+Mysore,Karnataka,1,0,1,1,1
+Mysore Urban,Karnataka,1,0,1,1,1
+Mysore Rural,Karnataka,1,0,1,1,1
+Hubli,Karnataka,1,0,1,1,1
+Hubli Urban,Karnataka,1,0,1,1,1
+Hubli Rural,Karnataka,1,0,1,1,1
+Mangalore,Karnataka,1,0,1,1,1
+Mangalore Urban,Karnataka,1,0,1,1,1
+Mangalore Rural,Karnataka,1,0,1,1,1
+Chennai,Tamil Nadu,0,0,2,2,2
+Chennai Urban,Tamil Nadu,0,0,2,2,2
+Chennai Rural,Tamil Nadu,0,0,2,2,2
+Coimbatore,Tamil Nadu,1,0,1,1,1
+Coimbatore Urban,Tamil Nadu,1,0,1,1,1
+Coimbatore Rural,Tamil Nadu,1,0,1,1,1
+Madurai,Tamil Nadu,1,0,1,1,1
+Madurai Urban,Tamil Nadu,1,0,1,1,1
+Madurai Rural,Tamil Nadu,1,0,1,1,1
+Salem,Tamil Nadu,1,0,1,1,1
+Salem Urban,Tamil Nadu,1,0,1,1,1
+Salem Rural,Tamil Nadu,1,0,1,1,1
+Tiruchirappalli,Tamil Nadu,1,0,1,1,1
+Tiruchirappalli Urban,Tamil Nadu,1,0,1,1,1
+Tiruchirappalli Rural,Tamil Nadu,1,0,1,1,1
+Hyderabad,Telangana,0,0,2,2,2
+Hyderabad Urban,Telangana,0,0,2,2,2
+Hyderabad Rural,Telangana,0,0,2,2,2
+Warangal,Telangana,1,0,1,1,1
+Warangal Urban,Telangana,1,0,1,1,1
+Warangal Rural,Telangana,1,0,1,1,1
+Karimnagar,Telangana,1,0,1,1,1
+Karimnagar Urban,Telangana,1,0,1,1,1
+Karimnagar Rural,Telangana,1,0,1,1,1
+Kolkata,West Bengal,0,0,2,2,2
+Kolkata Urban,West Bengal,0,0,2,2,2
+Kolkata Rural,West Bengal,0,0,2,2,2
+Howrah,West Bengal,1,0,1,1,1
+Howrah Urban,West Bengal,1,0,1,1,1
+Howrah Rural,West Bengal,1,0,1,1,1
+Durgapur,West Bengal,1,0,1,1,1
+Durgapur Urban,West Bengal,1,0,1,1,1
+Durgapur Rural,West Bengal,1,0,1,1,1
+Siliguri,West Bengal,1,0,1,1,1
+Siliguri Urban,West Bengal,1,0,1,1,1
+Siliguri Rural,West Bengal,1,0,1,1,1
+Patna,Bihar,1,0,1,1,1
+Patna Urban,Bihar,1,0,1,1,1
+Patna Rural,Bihar,1,0,1,1,1
+Gaya,Bihar,1,0,1,1,1
+Gaya Urban,Bihar,1,0,1,1,1
+Gaya Rural,Bihar,1,0,1,1,1
+Muzaffarpur,Bihar,1,0,1,1,1
+Muzaffarpur Urban,Bihar,1,0,1,1,1
+Muzaffarpur Rural,Bihar,1,0,1,1,1
+Ranchi,Jharkhand,1,0,1,1,1
+Ranchi Urban,Jharkhand,1,0,1,1,1
+Ranchi Rural,Jharkhand,1,0,1,1,1
+Jamshedpur,Jharkhand,1,0,1,1,1
+Jamshedpur Urban,Jharkhand,1,0,1,1,1
+Jamshedpur Rural,Jharkhand,1,0,1,1,1
+Bhopal,Madhya Pradesh,1,0,1,1,1
+Bhopal Urban,Madhya Pradesh,1,0,1,1,1
+Bhopal Rural,Madhya Pradesh,1,0,1,1,1
+Indore,Madhya Pradesh,1,0,1,1,1
+Indore Urban,Madhya Pradesh,1,0,1,1,1
+Indore Rural,Madhya Pradesh,1,0,1,1,1
+Gwalior,Madhya Pradesh,1,0,1,1,1
+Gwalior Urban,Madhya Pradesh,1,0,1,1,1
+Gwalior Rural,Madhya Pradesh,1,0,1,1,1
+Jabalpur,Madhya Pradesh,1,0,1,1,1
+Jabalpur Urban,Madhya Pradesh,1,0,1,1,1
+Jabalpur Rural,Madhya Pradesh,1,0,1,1,1
+Ujjain,Madhya Pradesh,1,0,1,1,1
+Ujjain Urban,Madhya Pradesh,1,0,1,1,1
+Ujjain Rural,Madhya Pradesh,1,0,1,1,1
+Ahmedabad,Gujarat,1,0,1,1,1
+Ahmedabad Urban,Gujarat,1,0,1,1,1
+Ahmedabad Rural,Gujarat,1,0,1,1,1
+Surat,Gujarat,1,0,1,1,1
+Surat Urban,Gujarat,1,0,1,1,1
+Surat Rural,Gujarat,1,0,1,1,1
+Vadodara,Gujarat,1,0,1,1,1
+Vadodara Urban,Gujarat,1,0,1,1,1
+Vadodara Rural,Gujarat,1,0,1,1,1
+Rajkot,Gujarat,1,0,1,1,1
+Rajkot Urban,Gujarat,1,0,1,1,1
+Rajkot Rural,Gujarat,1,0,1,1,1
+Jaipur,Rajasthan,1,0,1,1,1
+Jaipur Urban,Rajasthan,1,0,1,1,1
+Jaipur Rural,Rajasthan,1,0,1,1,1
+Udaipur,Rajasthan,1,0,1,1,1
+Udaipur Urban,Rajasthan,1,0,1,1,1
+Udaipur Rural,Rajasthan,1,0,1,1,1
+Jodhpur,Rajasthan,1,0,1,1,1
+Jodhpur Urban,Rajasthan,1,0,1,1,1
+Jodhpur Rural,Rajasthan,1,0,1,1,1
+Kota,Rajasthan,1,0,1,1,1
+Kota Urban,Rajasthan,1,0,1,1,1
+Kota Rural,Rajasthan,1,0,1,1,1
+Bikaner,Rajasthan,1,0,1,1,1
+Bikaner Urban,Rajasthan,1,0,1,1,1
+Bikaner Rural,Rajasthan,1,0,1,1,1
+Ajmer,Rajasthan,1,0,1,1,1
+Ajmer Urban,Rajasthan,1,0,1,1,1
+Ajmer Rural,Rajasthan,1,0,1,1,1
+Lucknow,Uttar Pradesh,1,0,1,1,1
+Lucknow Urban,Uttar Pradesh,1,0,1,1,1
+Lucknow Rural,Uttar Pradesh,1,0,1,1,1
+Kanpur,Uttar Pradesh,1,0,1,1,1
+Kanpur Urban,Uttar Pradesh,1,0,1,1,1
+Kanpur Rural,Uttar Pradesh,1,0,1,1,1
+Varanasi,Uttar Pradesh,1,0,1,1,1
+Varanasi Urban,Uttar Pradesh,1,0,1,1,1
+Varanasi Rural,Uttar Pradesh,1,0,1,1,1
+Agra,Uttar Pradesh,1,0,1,1,1
+Agra Urban,Uttar Pradesh,1,0,1,1,1
+Agra Rural,Uttar Pradesh,1,0,1,1,1
+Meerut,Uttar Pradesh,1,0,1,1,1
+Meerut Urban,Uttar Pradesh,1,0,1,1,1
+Meerut Rural,Uttar Pradesh,1,0,1,1,1
+Prayagraj,Uttar Pradesh,1,0,1,1,1
+Prayagraj Urban,Uttar Pradesh,1,0,1,1,1
+Prayagraj Rural,Uttar Pradesh,1,0,1,1,1
+Bareilly,Uttar Pradesh,1,0,1,1,1
+Bareilly Urban,Uttar Pradesh,1,0,1,1,1
+Bareilly Rural,Uttar Pradesh,1,0,1,1,1
+Gorakhpur,Uttar Pradesh,1,0,1,1,1
+Gorakhpur Urban,Uttar Pradesh,1,0,1,1,1
+Gorakhpur Rural,Uttar Pradesh,1,0,1,1,1
+Chandigarh,Chandigarh,1,0,1,1,1
+Chandigarh Urban,Chandigarh,1,0,1,1,1
+Chandigarh Rural,Chandigarh,1,0,1,1,1
+Shimla,Himachal Pradesh,1,2,1,1,1
+Shimla Urban,Himachal Pradesh,1,2,1,1,1
+Shimla Rural,Himachal Pradesh,1,2,1,1,1
+Manali,Himachal Pradesh,1,2,1,1,1
+Manali Urban,Himachal Pradesh,1,2,1,1,1
+Manali Rural,Himachal Pradesh,1,2,1,1,1
+Dharamshala,Himachal Pradesh,1,2,1,1,1
+Dharamshala Urban,Himachal Pradesh,1,2,1,1,1
+Dharamshala Rural,Himachal Pradesh,1,2,1,1,1
+Solan,Himachal Pradesh,1,2,1,1,1
+Solan Urban,Himachal Pradesh,1,2,1,1,1
+Solan Rural,Himachal Pradesh,1,2,1,1,1
+Dehradun,Uttarakhand,1,2,1,1,1
+Dehradun Urban,Uttarakhand,1,2,1,1,1
+Dehradun Rural,Uttarakhand,1,2,1,1,1
+Haridwar,Uttarakhand,1,2,1,1,1
+Haridwar Urban,Uttarakhand,1,2,1,1,1
+Haridwar Rural,Uttarakhand,1,2,1,1,1
+Rishikesh,Uttarakhand,1,2,1,1,1
+Rishikesh Urban,Uttarakhand,1,2,1,1,1
+Rishikesh Rural,Uttarakhand,1,2,1,1,1
+Amritsar,Punjab,1,0,1,1,1
+Amritsar Urban,Punjab,1,0,1,1,1
+Amritsar Rural,Punjab,1,0,1,1,1
+Ludhiana,Punjab,1,0,1,1,1
+Ludhiana Urban,Punjab,1,0,1,1,1
+Ludhiana Rural,Punjab,1,0,1,1,1
+Jalandhar,Punjab,1,0,1,1,1
+Jalandhar Urban,Punjab,1,0,1,1,1
+Jalandhar Rural,Punjab,1,0,1,1,1
+Patiala,Punjab,1,0,1,1,1
+Patiala Urban,Punjab,1,0,1,1,1
+Patiala Rural,Punjab,1,0,1,1,1
+Panaji,Goa,1,0,1,1,1
+Panaji Urban,Goa,1,0,1,1,1
+Panaji Rural,Goa,1,0,1,1,1
+Margao,Goa,1,0,1,1,1
+Margao Urban,Goa,1,0,1,1,1
+Margao Rural,Goa,1,0,1,1,1
+Raipur,Chhattisgarh,1,0,1,1,1
+Raipur Urban,Chhattisgarh,1,0,1,1,1
+Raipur Rural,Chhattisgarh,1,0,1,1,1
+Bilaspur,Chhattisgarh,1,0,1,1,1
+Bilaspur Urban,Chhattisgarh,1,0,1,1,1
+Bilaspur Rural,Chhattisgarh,1,0,1,1,1
+Durg,Chhattisgarh,1,0,1,1,1
+Durg Urban,Chhattisgarh,1,0,1,1,1
+Durg Rural,Chhattisgarh,1,0,1,1,1
+Imphal,Manipur,1,0,1,1,1
+Imphal Urban,Manipur,1,0,1,1,1
+Imphal Rural,Manipur,1,0,1,1,1
+Aizawl,Mizoram,1,0,1,1,1
+Aizawl Urban,Mizoram,1,0,1,1,1
+Aizawl Rural,Mizoram,1,0,1,1,1
+Shillong,Meghalaya,1,0,1,1,1
+Shillong Urban,Meghalaya,1,0,1,1,1
+Shillong Rural,Meghalaya,1,0,1,1,1
+Gangtok,Sikkim,1,2,1,1,1
+Gangtok Urban,Sikkim,1,2,1,1,1
+Gangtok Rural,Sikkim,1,2,1,1,1
+Itanagar,Arunachal Pradesh,1,2,1,1,1
+Itanagar Urban,Arunachal Pradesh,1,2,1,1,1
+Itanagar Rural,Arunachal Pradesh,1,2,1,1,1
+Agartala,Tripura,1,0,1,1,1
+Agartala Urban,Tripura,1,0,1,1,1
+Agartala Rural,Tripura,1,0,1,1,1
+Kohima,Nagaland,1,0,1,1,1
+Kohima Urban,Nagaland,1,0,1,1,1
+Kohima Rural,Nagaland,1,0,1,1,1

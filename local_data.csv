@@ -1,0 +1,88 @@
+city,state,animal,terrain,traffic,school,crime
+Jammu,Jammu & Kashmir,2,2,1,1,1
+Samba,Jammu & Kashmir,2,1,1,1,0
+Rajouri,Jammu & Kashmir,2,2,0,0,0
+Srinagar,Jammu & Kashmir,1,2,2,1,1
+Anantnag,Jammu & Kashmir,2,2,1,0,0
+Baramulla,Jammu & Kashmir,2,2,1,0,0
+Kupwara,Jammu & Kashmir,2,2,0,0,0
+Delhi,Delhi,0,0,2,2,2
+Noida,Uttar Pradesh,0,0,2,2,1
+Gurgaon,Haryana,0,0,2,2,2
+Faridabad,Haryana,1,0,2,2,1
+Ghaziabad,Uttar Pradesh,1,0,2,2,1
+Jaipur,Rajasthan,1,1,2,1,1
+Udaipur,Rajasthan,1,2,1,0,0
+Jodhpur,Rajasthan,2,1,1,0,1
+Kota,Rajasthan,1,0,2,2,1
+Bikaner,Rajasthan,2,1,1,0,1
+Ajmer,Rajasthan,1,1,1,1,1
+Lucknow,Uttar Pradesh,1,0,2,2,2
+Kanpur,Uttar Pradesh,1,0,2,2,2
+Varanasi,Uttar Pradesh,2,0,2,2,1
+Agra,Uttar Pradesh,1,0,2,1,1
+Meerut,Uttar Pradesh,1,0,2,2,1
+Prayagraj,Uttar Pradesh,1,0,2,2,1
+Bareilly,Uttar Pradesh,1,0,1,1,1
+Gorakhpur,Uttar Pradesh,2,0,1,1,1
+Mumbai,Maharashtra,0,0,2,2,2
+Pune,Maharashtra,0,1,2,2,1
+Nagpur,Maharashtra,1,0,2,1,1
+Nashik,Maharashtra,1,1,1,1,1
+Aurangabad,Maharashtra,1,1,1,1,1
+Thane,Maharashtra,0,0,2,2,2
+Bangalore,Karnataka,0,1,2,2,2
+Mysore,Karnataka,1,1,1,1,1
+Hubli,Karnataka,1,0,1,1,1
+Mangalore,Karnataka,1,1,1,1,1
+Chennai,Tamil Nadu,0,0,2,2,2
+Coimbatore,Tamil Nadu,1,1,1,1,1
+Madurai,Tamil Nadu,1,1,1,1,1
+Salem,Tamil Nadu,1,1,1,1,1
+Tiruchirappalli,Tamil Nadu,1,1,1,1,1
+Hyderabad,Telangana,0,0,2,2,2
+Warangal,Telangana,1,1,1,1,1
+Karimnagar,Telangana,1,1,1,1,1
+Kolkata,West Bengal,0,0,2,2,2
+Howrah,West Bengal,0,0,2,2,2
+Durgapur,West Bengal,1,0,1,1,1
+Siliguri,West Bengal,2,1,1,1,1
+Patna,Bihar,1,0,2,2,2
+Gaya,Bihar,2,0,1,1,1
+Muzaffarpur,Bihar,2,0,1,1,1
+Ranchi,Jharkhand,2,1,1,1,1
+Jamshedpur,Jharkhand,1,0,1,1,1
+Bhopal,Madhya Pradesh,1,0,2,1,1
+Indore,Madhya Pradesh,1,0,2,2,1
+Gwalior,Madhya Pradesh,1,0,1,1,1
+Jabalpur,Madhya Pradesh,1,1,1,1,1
+Ujjain,Madhya Pradesh,1,0,1,1,1
+Ahmedabad,Gujarat,0,0,2,2,2
+Surat,Gujarat,0,0,2,2,2
+Vadodara,Gujarat,0,0,1,1,1
+Rajkot,Gujarat,1,0,1,1,1
+Chandigarh,Chandigarh,0,0,1,1,1
+Shimla,Himachal Pradesh,1,2,1,0,0
+Manali,Himachal Pradesh,2,2,1,0,0
+Dharamshala,Himachal Pradesh,2,2,1,0,0
+Solan,Himachal Pradesh,1,2,1,0,0
+Dehradun,Uttarakhand,1,2,1,1,1
+Haridwar,Uttarakhand,2,1,1,1,1
+Rishikesh,Uttarakhand,2,2,1,0,1
+Amritsar,Punjab,1,0,1,1,1
+Ludhiana,Punjab,1,0,2,2,1
+Jalandhar,Punjab,1,0,1,1,1
+Patiala,Punjab,1,0,1,1,1
+Goa,Goa,1,1,1,1,1
+Panaji,Goa,1,1,1,1,1
+Margao,Goa,1,1,1,1,1
+Raipur,Chhattisgarh,1,0,1,1,1
+Bilaspur,Chhattisgarh,2,1,1,1,1
+Durg,Chhattisgarh,1,0,1,1,1
+Imphal,Manipur,2,2,1,0,1
+Aizawl,Mizoram,2,2,1,0,1
+Shillong,Meghalaya,2,2,1,0,1
+Gangtok,Sikkim,2,2,1,0,1
+Itanagar,Arunachal Pradesh,2,2,0,0,1
+Agartala,Tripura,2,1,1,1,1
+Kohima,Nagaland,2,2,1,0,1

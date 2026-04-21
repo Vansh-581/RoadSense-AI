@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RoadSense AI — Accident Intelligence Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+</head>
+<body>
+
+  <!-- =====================================================
+       CINEMATIC LOADING SCREEN
+       3D perspective road rushing toward viewer
+  ====================================================== -->
+  <div id="loader" class="loader-wrap">
+    <canvas id="loaderCanvas"></canvas>
+    <div class="loader-content">
+      <div class="loader-logo">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+          <polygon points="24,4 44,40 4,40" stroke="#00e5cc" stroke-width="2" fill="none" opacity="0.3"/>
+          <polygon points="24,12 38,38 10,38" stroke="#00e5cc" stroke-width="1.5" fill="none" opacity="0.6"/>
+          <circle cx="24" cy="26" r="6" fill="#00e5cc"/>
+        </svg>
+      </div>
+      <div class="loader-title">ROADSENSE <span>AI</span></div>
+      <div class="loader-subtitle">ACCIDENT INTELLIGENCE PLATFORM</div>
+      <div class="loader-bar-wrap">
+        <div class="loader-bar-fill" id="loaderBar"></div>
+      </div>
+      <div class="loader-status" id="loaderStatus">Initialising systems…</div>
+    </div>
+  </div>
+
+
+  <!-- =====================================================
+       MAIN APP SHELL
+       Left icon sidebar + top bar + main content area
+  ====================================================== -->
+  <div class="app-shell" id="appShell">
+
+    <!-- ── ICON SIDEBAR (left strip) ── -->
+    <nav class="icon-sidebar">
+      <div class="sidebar-logo">
+        <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
+          <polygon points="24,4 44,40 4,40" stroke="#00e5cc" stroke-width="2.5" fill="none"/>
+          <circle cx="24" cy="26" r="5" fill="#00e5cc"/>
+        </svg>
+      </div>
+
+      <div class="sidebar-nav">
+        <button class="nav-icon active" data-tab="predict" title="Predict Risk">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <span>PREDICT</span>
+        </button>
+        <button class="nav-icon" data-tab="analysis" title="Risk Analysis">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <span>ANALYSIS</span>
+        </button>
+        <button class="nav-icon" data-tab="heatmap" title="Risk Heatmap">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span>HEATMAP</span>
+        </button>
+        <button class="nav-icon" data-tab="saferoute" title="SafeRoute">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+          <span>SAFEROUTE</span>
+        </button>
+      </div>
+
+      <div class="sidebar-bottom">
+        <div class="system-status">
+          <div class="sys-dot"></div>
+          <span>ONLINE</span>
+        </div>
+      </div>
+    </nav>
+
+
+    <!-- ── MAIN CONTENT ── -->
+    <div class="main-content">
+
+      <!-- TOP BAR -->
+      <header class="top-bar">
+        <div class="top-bar-left">
+          <div class="page-title" id="pageTitle">SYSTEM CONTROL</div>
+          <div class="page-subtitle" id="pageSubtitle">RISK PREDICTION MODULE</div>
+        </div>
+        <div class="top-bar-right">
+          <div class="system-time" id="systemTime">--:--:--</div>
+          <div class="top-bar-badge">INDIA NETWORK</div>
+        </div>
+      </header>
+
+
+      <!-- ====================================================
+           TAB 1 — PREDICT
+           Left: form controls  |  Right: network status + results
+      ===================================================== -->
+      <div class="tab-page active" id="tab-predict">
+        <div class="predict-grid">
+
+          <!-- LEFT CONTROL PANEL -->
+          <div class="control-panel glass-panel">
+            <div class="panel-header">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00e5cc" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              PARAMETERS
+            </div>
+
+            <form id="predictForm" autocomplete="off">
+
+              <!-- Location -->
+              <div class="ctrl-section">
+                <div class="ctrl-label">LOCATION VECTOR</div>
+                <div class="ctrl-field">
+                  <label>State</label>
+                  <div class="select-box">
+                    <select id="stateSelect" name="state" required>
+                      <option value="">— Select State —</option>
+                    </select>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                </div>
+                <div class="ctrl-field">
+                  <label>City / District</label>
+                  <div class="select-box">
+                    <select id="citySelect" name="city" required>
+                      <option value="">— Select City —</option>
+                    </select>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                </div>
+
+                <!-- Live weather notification -->
+                <div class="weather-chip" id="weatherChip" style="display:none">
+                  <span class="chip-pulse"></span>
+                  <span id="weatherChipText">—</span>
+                  <button type="button" id="applyWeatherBtn" class="chip-apply">APPLY</button>
+                </div>
+              </div>
+
+              <!-- Environmental conditions -->
+              <div class="ctrl-section">
+                <div class="ctrl-label">ENVIRONMENTAL</div>
+                <div class="two-up">
+                  <div class="ctrl-field">
+                    <label>Time</label>
+                    <div class="seg-control" id="timeToggle">
+                      <button type="button" class="seg-btn active" data-val="Day">DAY</button>
+                      <button type="button" class="seg-btn" data-val="Night">NIGHT</button>
+                    </div>
+                    <input type="hidden" id="timeInput" name="time" value="Day"/>
+                  </div>
+                  <div class="ctrl-field">
+                    <label>Speed</label>
+                    <div class="seg-control" id="speedToggle">
+                      <button type="button" class="seg-btn active" data-val="Low">LO</button>
+                      <button type="button" class="seg-btn" data-val="Moderate">MED</button>
+                      <button type="button" class="seg-btn" data-val="High">HI</button>
+                    </div>
+                    <input type="hidden" id="speedInput" name="speed" value="Low"/>
+                  </div>
+                </div>
+                <div class="ctrl-field">
+                  <label>Weather</label>
+                  <div class="select-box">
+                    <select id="weatherSelect" name="weather">
+                      <option value="Clear">☀ CLEAR</option>
+                      <option value="Rainy">⛆ RAIN</option>
+                      <option value="Foggy">◎ FOGGY</option>
+                      <option value="Hazy">⊙ HAZY</option>
+                      <option value="Stormy">⚡ STORM</option>
+                    </select>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Traffic & road -->
+              <div class="ctrl-section">
+                <div class="ctrl-label">TRAFFIC FLOW</div>
+                <div class="two-up">
+                  <div class="ctrl-field">
+                    <label>Road Type</label>
+                    <div class="select-box">
+                      <select name="road_type">
+                        <option value="Urban Road">Urban</option>
+                        <option value="National Highway">NH</option>
+                        <option value="State Highway">SH</option>
+                        <option value="Village Road">Village</option>
+                      </select>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                  </div>
+                  <div class="ctrl-field">
+                    <label>Surface</label>
+                    <div class="select-box">
+                      <select name="road_condition">
+                        <option value="Dry">Dry</option>
+                        <option value="Wet">Wet</option>
+                        <option value="Damaged">Damaged</option>
+                        <option value="Under Construction">Constr.</option>
+                      </select>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                  </div>
+                </div>
+                <div class="two-up">
+                  <div class="ctrl-field">
+                    <label>Lighting</label>
+                    <div class="select-box">
+                      <select name="lighting">
+                        <option value="Daylight">Daylight</option>
+                        <option value="Dark">Dark</option>
+                        <option value="Dusk">Dusk</option>
+                        <option value="Dawn">Dawn</option>
+                      </select>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                  </div>
+                  <div class="ctrl-field">
+                    <label>Traffic Ctrl</label>
+                    <div class="select-box">
+                      <select name="traffic_control">
+                        <option value="Signals">Signals</option>
+                        <option value="Signs">Signs</option>
+                        <option value="Police Checkpost">Police</option>
+                        <option value="Unknown">Unknown</option>
+                      </select>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Risk logic / driver -->
+              <div class="ctrl-section">
+                <div class="ctrl-label">RISK LOGIC</div>
+                <div class="two-up">
+                  <div class="ctrl-field">
+                    <label>Vehicle</label>
+                    <div class="select-box">
+                      <select name="vehicle">
+                        <option value="Car">Car</option>
+                        <option value="Two-Wheeler">2-Wheeler</option>
+                        <option value="Bus">Bus</option>
+                        <option value="Truck">Truck</option>
+                        <option value="Auto-Rickshaw">Auto</option>
+                        <option value="Cycle">Cycle</option>
+                        <option value="Pedestrian">Pedestrian</option>
+                      </select>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                  </div>
+                  <div class="ctrl-field">
+                    <label>Age Group</label>
+                    <div class="select-box">
+                      <select name="age_group">
+                        <option value="Adult">Adult</option>
+                        <option value="Young">Young</option>
+                        <option value="Senior">Senior</option>
+                      </select>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                  </div>
+                </div>
+                <div class="two-up">
+                  <div class="ctrl-field">
+                    <label>Gender</label>
+                    <div class="seg-control" id="genderToggle">
+                      <button type="button" class="seg-btn active" data-val="Male">♂ M</button>
+                      <button type="button" class="seg-btn" data-val="Female">♀ F</button>
+                    </div>
+                    <input type="hidden" id="genderInput" name="gender" value="Male"/>
+                  </div>
+                  <div class="ctrl-field">
+                    <label>License</label>
+                    <div class="select-box">
+                      <select name="license">
+                        <option value="Valid">Valid</option>
+                        <option value="Expired">Expired</option>
+                        <option value="Unknown">Unknown</option>
+                      </select>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                  </div>
+                </div>
+                <div class="ctrl-field">
+                  <label>Alcohol Involved</label>
+                  <div class="seg-control" id="alcoholToggle">
+                    <button type="button" class="seg-btn active" data-val="No">NO</button>
+                    <button type="button" class="seg-btn seg-danger" data-val="Yes">YES ⚠</button>
+                  </div>
+                  <input type="hidden" id="alcoholInput" name="alcohol" value="No"/>
+                </div>
+              </div>
+
+              <!-- Execute button -->
+              <button type="submit" class="execute-btn" id="predictBtn">
+                <span class="exec-normal">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                  EXECUTE ANALYSIS
+                </span>
+                <span class="exec-loading" style="display:none">
+                  <span class="exec-spinner"></span>
+                  COMPUTING…
+                </span>
+              </button>
+
+            </form>
+          </div>
+
+          <!-- RIGHT RESULTS PANEL -->
+          <div class="results-column">
+
+            <!-- Welcome state -->
+            <div class="welcome-panel glass-panel" id="welcomePanel">
+              <div class="network-status-header">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00e5cc" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/><path d="M12 2a10 10 0 0 1 0 20"/></svg>
+                NETWORK STATUS
+              </div>
+              <p class="network-status-desc">Real-time aggregate risk assessment across monitored vectors across 27 Indian states.</p>
+
+              <!-- Idle gauge -->
+              <div class="gauge-wrap">
+                <canvas id="idleGauge" width="200" height="200"></canvas>
+                <div class="gauge-center-text">
+                  <div class="gauge-pct">--</div>
+                  <div class="gauge-label">AWAITING INPUT</div>
+                </div>
+              </div>
+
+              <div class="network-stats">
+                <div class="net-stat"><span class="net-val">237</span><span class="net-key">CITIES</span></div>
+                <div class="net-stat"><span class="net-val">27</span><span class="net-key">STATES</span></div>
+                <div class="net-stat"><span class="net-val">13</span><span class="net-key">VECTORS</span></div>
+              </div>
+            </div>
+
+            <!-- Results state (hidden until prediction) -->
+            <div class="results-panel-wrap" id="resultsWrap" style="display:none">
+
+              <!-- Top: gauge + severity -->
+              <div class="results-top-row">
+                <div class="gauge-card glass-panel">
+                  <div class="gauge-wrap">
+                    <canvas id="resultGauge" width="200" height="200"></canvas>
+                    <div class="gauge-center-text">
+                      <div class="gauge-pct" id="gaugePct">0%</div>
+                      <div class="gauge-label" id="gaugeLabel">RISK LEVEL</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="severity-readout glass-panel" id="severityCard">
+                  <div class="readout-label">SEVERITY ASSESSMENT</div>
+                  <div class="readout-value" id="severityValue">—</div>
+                  <div class="readout-desc" id="severityDesc">—</div>
+                  <button class="reset-link" id="resetBtn">↩ NEW ANALYSIS</button>
+                </div>
+              </div>
+
+              <!-- Bottom: analysis cards row -->
+              <div class="analysis-cards-row" id="analysisCardsRow">
+
+                <!-- Atmospheric / probabilities -->
+                <div class="analysis-card glass-panel" id="probCard">
+                  <div class="analysis-card-header">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+                    <span>Atmospheric Conditions</span>
+                    <span class="card-badge" id="probBadge">—</span>
+                  </div>
+                  <div class="prob-rows" id="probBars"></div>
+                </div>
+
+                <!-- Traffic density / local score -->
+                <div class="analysis-card glass-panel" id="riskCard">
+                  <div class="analysis-card-header">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                    <span>Traffic Density</span>
+                    <span class="card-badge" id="riskBadge">—</span>
+                  </div>
+                  <div class="mini-stats" id="riskScores"></div>
+                </div>
+
+                <!-- Structural integrity / SHAP -->
+                <div class="analysis-card glass-panel" id="shapCard">
+                  <div class="analysis-card-header">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 4v16"/></svg>
+                    <span>Structural Integrity</span>
+                    <span class="card-badge" id="shapBadge">AI FACTORS</span>
+                  </div>
+                  <div class="shap-rows" id="shapBars"></div>
+                </div>
+
+              </div>
+
+              <!-- Insights strip -->
+              <div class="insights-strip glass-panel" id="insightsStrip">
+                <div class="insights-strip-title">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5cc" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  SYSTEM ALERTS
+                </div>
+                <div class="insights-ticker" id="insightsList"></div>
+              </div>
+
+            </div>
+
+            <!-- Error box -->
+            <div class="error-chip" id="errorBanner" style="display:none">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span id="errorMsg">Error occurred.</span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ====================================================
+           TAB 2 — ANALYSIS (new)
+           Full graphical breakdown of risk factors
+      ===================================================== -->
+      <div class="tab-page" id="tab-analysis">
+        <div class="analysis-page">
+
+          <div class="analysis-page-header">
+            <div>
+              <div class="analysis-page-title">ROUTE SAFETY ANALYSIS</div>
+              <div class="analysis-page-sub">AI-powered breakdown of accident risk vectors</div>
+            </div>
+            <div class="analysis-empty-note" id="analysisEmptyNote">Run a prediction first to populate this view</div>
+          </div>
+
+          <div class="analysis-grid" id="analysisGrid">
+
+            <!-- Radial risk breakdown -->
+            <div class="big-chart-card glass-panel">
+              <div class="chart-card-title">Risk Vector Breakdown</div>
+              <div class="chart-card-sub">Contribution of each factor to the prediction</div>
+              <canvas id="radarChart" width="320" height="320"></canvas>
+            </div>
+
+            <!-- Bar chart: severity probabilities -->
+            <div class="big-chart-card glass-panel">
+              <div class="chart-card-title">Severity Probability Distribution</div>
+              <div class="chart-card-sub">ML model output probabilities</div>
+              <canvas id="barChart" width="320" height="320"></canvas>
+            </div>
+
+            <!-- State risk gauge -->
+            <div class="stat-card glass-panel">
+              <div class="chart-card-title">State Risk Index</div>
+              <canvas id="stateGauge" width="200" height="140"></canvas>
+              <div class="stat-card-value" id="stateRiskVal">—</div>
+              <div class="stat-card-label">Risk Score (1.0 – 3.0)</div>
+            </div>
+
+            <!-- Local score donut -->
+            <div class="stat-card glass-panel">
+              <div class="chart-card-title">Local Intelligence Score</div>
+              <canvas id="localDonut" width="200" height="140"></canvas>
+              <div class="stat-card-value" id="localScoreVal">—</div>
+              <div class="stat-card-label">City-level Risk (0 – 2.4)</div>
+            </div>
+
+            <!-- Historical context cards -->
+            <div class="context-card glass-panel">
+              <div class="chart-card-title">Risk Context Cards</div>
+              <div class="context-rows" id="contextRows"></div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ====================================================
+           TAB 3 — HEATMAP
+      ===================================================== -->
+      <div class="tab-page" id="tab-heatmap">
+        <div class="heatmap-layout">
+          <div class="heatmap-sidebar glass-panel">
+            <div class="panel-header">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00e5cc" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+              STATE RISK INDEX
+            </div>
+            <p class="heatmap-hint">Click any state to load into predict module</p>
+            <div class="risk-legend">
+              <div class="legend-row"><span class="ldot red"></span> HIGH ≥ 2.5</div>
+              <div class="legend-row"><span class="ldot amber"></span> MED 1.8–2.5</div>
+              <div class="legend-row"><span class="ldot teal"></span> LOW &lt; 1.8</div>
+            </div>
+            <div class="state-list" id="heatmapStateList"></div>
+          </div>
+          <div class="heatmap-canvas-area">
+            <div id="indiaMapContainer"></div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ====================================================
+           TAB 4 — SAFEROUTE
+      ===================================================== -->
+      <div class="tab-page" id="tab-saferoute">
+        <div class="saferoute-layout">
+          <div class="saferoute-sidebar glass-panel">
+            <div class="panel-header">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00e5cc" stroke-width="2"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+              ROUTE PLANNER
+            </div>
+
+            <div class="ctrl-field">
+              <label>ORIGIN</label>
+              <input type="text" id="srOrigin" class="text-input" placeholder="e.g. Delhi"/>
+            </div>
+            <div class="ctrl-field">
+              <label>DESTINATION</label>
+              <input type="text" id="srDest" class="text-input" placeholder="e.g. Jaipur"/>
+            </div>
+
+            <div class="weather-chip" id="srWeatherChip" style="display:none">
+              <span class="chip-pulse"></span>
+              <span id="srWeatherChipText">—</span>
+              <button type="button" id="srApplyWeatherBtn" class="chip-apply">APPLY</button>
+            </div>
+
+            <div class="two-up">
+              <div class="ctrl-field">
+                <label>TIME</label>
+                <div class="seg-control" id="srTimeToggle">
+                  <button type="button" class="seg-btn active" data-val="Day">DAY</button>
+                  <button type="button" class="seg-btn" data-val="Night">NIGHT</button>
+                </div>
+                <input type="hidden" id="srTimeInput" value="Day"/>
+              </div>
+              <div class="ctrl-field">
+                <label>WEATHER</label>
+                <div class="select-box">
+                  <select id="srWeather">
+                    <option value="Clear">CLEAR</option>
+                    <option value="Rainy">RAIN</option>
+                    <option value="Foggy">FOGGY</option>
+                    <option value="Hazy">HAZY</option>
+                    <option value="Stormy">STORM</option>
+                  </select>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <div class="ctrl-field">
+              <label>SPEED</label>
+              <div class="seg-control" id="srSpeedToggle">
+                <button type="button" class="seg-btn active" data-val="Low">LOW</button>
+                <button type="button" class="seg-btn" data-val="Moderate">MODERATE</button>
+                <button type="button" class="seg-btn" data-val="High">HIGH</button>
+              </div>
+              <input type="hidden" id="srSpeedInput" value="Low"/>
+            </div>
+
+            <button class="execute-btn" id="srAnalyseBtn">
+              <span class="exec-normal">▶ FIND SAFEST ROUTE</span>
+              <span class="exec-loading" style="display:none"><span class="exec-spinner"></span>ROUTING…</span>
+            </button>
+
+            <div id="routeResults" style="display:none">
+              <div class="route-compare-title">ROUTE COMPARISON</div>
+              <div id="routeCards"></div>
+            </div>
+
+            <div class="error-chip" id="srErrorBanner" style="display:none">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span id="srErrorMsg">Error.</span>
+            </div>
+          </div>
+
+          <div class="route-map-area">
+            <div id="routeMap"></div>
+            <div class="map-idle" id="mapPlaceholder">
+              <div>🗺</div>
+              <p>Enter a route above to visualise risk-scored paths</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end main-content -->
+  </div><!-- end app-shell -->
+
+
+  <script>window.GOOGLE_API_KEY = "{{ google_api_key }}";</script>
+  <script src="/static/js/script.js"></script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}&libraries=geometry&callback=initGoogleMaps"></script>
+</body>
+</html>
