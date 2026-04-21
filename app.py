@@ -24,6 +24,11 @@ FEATURE_ORDER = [
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 GOOGLE_WEATHER_KEY = os.getenv("GOOGLE_WEATHER_KEY")
 
+if not GOOGLE_API_KEY:
+    raise ValueError("GOOGLE_API_KEY is missing")
+
+if not GOOGLE_WEATHER_KEY:
+    raise ValueError("GOOGLE_WEATHER_KEY is missing")
 
 state_city_map = {}
 for _, row in all_local.iterrows():
@@ -318,5 +323,6 @@ def get_weather():
             "error":   str(e),
         })
 
-if __name__=="__main__":
-    app.run(debug=True,port=5000)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
