@@ -1132,12 +1132,12 @@ function highlightRoute(idx) {
 
 function darkMapStyles() {
   return [
-    {elementType:"geometry",      stylers:[{color:"#04100e"}]},
+    {elementType:"geometry",      stylers:[{color:"#000000"}]},
     {elementType:"labels.text.stroke", stylers:[{color:"#04100e"}]},
     {elementType:"labels.text.fill",   stylers:[{color:"#3a5a55"}]},
     {featureType:"road",          elementType:"geometry",        stylers:[{color:"#0d1e1a"}]},
     {featureType:"road.highway",  elementType:"geometry",        stylers:[{color:"#122a24"}]},
-    {featureType:"water",         elementType:"geometry",        stylers:[{color:"#081510"}]},
+    {featureType:"water",         elementType:"geometry",        stylers:[{color:"#06111d"}]},
     {featureType:"poi",           elementType:"geometry",        stylers:[{color:"#080f0c"}]},
     {featureType:"administrative",elementType:"geometry.stroke", stylers:[{color:"#1a3530"}]},
   ];
