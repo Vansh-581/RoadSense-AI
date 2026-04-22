@@ -173,19 +173,33 @@ function setupTabs() {
     btn.addEventListener("click", () => {
       const tabName = btn.dataset.tab;
 
-      /* Update nav icons */
       all(".nav-icon").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
 
-      /* Update tab pages */
       all(".tab-page").forEach(p => p.classList.remove("active"));
       el("tab-" + tabName).classList.add("active");
 
-      /* Update top bar text */
       const meta = PAGE_META[tabName];
       if (meta) {
         el("pageTitle").textContent    = meta.title;
         el("pageSubtitle").textContent = meta.sub;
+      }
+
+      /* Mobile: scroll content area back to top when switching tabs */
+      const mainContent = document.querySelector(".main-content");
+      if (mainContent) mainContent.scrollTop = 0;
+      window.scrollTo(0, 0);
+
+      /* SafeRoute: Google Maps needs a resize trigger after becoming visible.
+         Without this the map renders grey/blank on mobile. */
+      if (tabName === "saferoute" && typeof google !== "undefined" && gMap) {
+        setTimeout(() => google.maps.event.trigger(gMap, "resize"), 150);
+      }
+
+      /* Heatmap: SVG map uses container dimensions — rebuild when tab opens
+         so it fills the correct mobile size (not desktop size from initial load) */
+      if (tabName === "heatmap") {
+        setTimeout(() => loadHeatmap(), 150);
       }
     });
   });
@@ -931,8 +945,11 @@ function buildStateList(riskData) {
 
 function buildMapSVG(riskData) {
   const container = el("indiaMapContainer");
-  const W = container.offsetWidth  || 600;
-  const H = container.offsetHeight || 600;
+
+  /* When the heatmap tab is hidden, offsetWidth/Height are 0.
+     Use the container's parent size or a sensible mobile fallback. */
+  const W = container.offsetWidth  || container.parentElement?.offsetWidth  || 360;
+  const H = container.offsetHeight || container.parentElement?.offsetHeight || 320;
 
   const LAT_MIN=8,LAT_MAX=37,LNG_MIN=68,LNG_MAX=97;
   function toXY(lat,lng) {
@@ -1024,6 +1041,18 @@ function initGoogleMaps() {
     center: {lat:22.5, lng:80.0}, zoom: 5,
     styles: darkMapStyles(),
     mapTypeControl: false, streetViewControl: false,
+    fullscreenControl: false, /* saves space on mobile */
+    zoomControlOptions: {
+      position: google.maps.ControlPosition.RIGHT_BOTTOM
+    },
+  });
+
+  /* When phone rotates or window resizes, trigger a map resize
+     so it fills the new dimensions correctly */
+  window.addEventListener("resize", () => {
+    if (gMap) {
+      setTimeout(() => google.maps.event.trigger(gMap, "resize"), 200);
+    }
   });
 }
 

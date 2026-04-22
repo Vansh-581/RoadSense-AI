@@ -793,3 +793,439 @@ html, body {
 @keyframes fade-up { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
 @keyframes fade-in  { from{opacity:0} to{opacity:1} }
 @keyframes card-in  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+/* ============================================================
+   RESPONSIVE — MOBILE & TABLET
+   Breakpoints:
+     768px  = tablet portrait / large phone landscape
+     480px  = phone portrait (most phones)
+   
+   Strategy per tab:
+   - Predict:    form stacks above results, sidebar becomes bottom nav bar
+   - Analysis:   single column grid
+   - Heatmap:    map shows first, sidebar collapses to accordion
+   - SafeRoute:  sidebar stacks above map, map gets fixed height
+============================================================ */
+
+
+/* ── TABLET (≤ 900px) ──────────────────────────────────── */
+@media (max-width: 900px) {
+
+  /* Allow page to scroll freely on mobile — overflow:hidden breaks things */
+  html, body { overflow: auto; }
+
+  /* ── App shell: sidebar moves to BOTTOM, becomes a tab bar ── */
+  .app-shell {
+    grid-template-columns: 1fr;          /* no side column */
+    grid-template-rows: 1fr auto;        /* content + bottom nav */
+    height: 100dvh;                      /* dvh handles mobile browser chrome */
+  }
+
+  .icon-sidebar {
+    /* Move sidebar to the bottom of the screen as a horizontal nav bar */
+    order: 2;                             /* push below main content */
+    flex-direction: row;                  /* icons side by side */
+    align-items: center;
+    justify-content: space-around;
+    padding: 8px 12px;
+    height: 58px;
+    border-right: none;
+    border-top: 1px solid var(--border-teal);
+    width: 100%;
+    --sidebar-w: 0px;                     /* no left column space needed */
+  }
+
+  /* Hide logo + status dot in bottom bar — no room */
+  .sidebar-logo, .sidebar-bottom { display: none; }
+
+  .sidebar-nav {
+    flex-direction: row;
+    gap: 4px;
+    flex: unset;
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  .nav-icon {
+    flex-direction: column;
+    width: auto;
+    height: auto;
+    padding: 6px 14px;
+    font-size: 0.55rem;
+    border-radius: 8px;
+    gap: 3px;
+  }
+  .nav-icon svg { width: 18px; height: 18px; }
+
+  /* Main content sits above the bottom nav bar */
+  .main-content {
+    order: 1;
+    height: calc(100dvh - 58px);          /* full height minus bottom bar */
+  }
+
+  /* Top bar — shrink text on small screens */
+  .top-bar { padding: 0 14px; }
+  .page-title  { font-size: 1rem; letter-spacing: 2px; }
+  .page-subtitle { font-size: 0.65rem; }
+  .top-bar-badge { display: none; }       /* hide the badge to save space */
+
+  /* ── PREDICT TAB: stack form above results ── */
+  .predict-grid {
+    grid-template-columns: 1fr;           /* single column */
+    grid-template-rows: auto 1fr;         /* form height auto, results stretch */
+    height: auto;                         /* let it scroll */
+    overflow-y: auto;
+    padding: 12px;
+    gap: 12px;
+  }
+
+  /* Control panel: don't scroll internally, let the page scroll */
+  .control-panel {
+    overflow-y: visible;
+    max-height: none;
+  }
+
+  /* Results column: visible below the form */
+  .results-column {
+    overflow-y: visible;
+  }
+
+  /* Welcome panel gauge: make it smaller */
+  #idleGauge, #resultGauge {
+    width: 160px !important;
+    height: 160px !important;
+  }
+
+  /* Top row inside results (gauge + severity side by side) — stack them */
+  .results-top-row {
+    grid-template-columns: 1fr;           /* stack gauge above severity */
+    gap: 12px;
+  }
+
+  /* The 3 analysis cards row — stack to single column */
+  .analysis-cards-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  /* ── ANALYSIS TAB ── */
+  .analysis-grid {
+    grid-template-columns: 1fr;           /* one column on tablet */
+    gap: 14px;
+  }
+
+  .analysis-page-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* ── HEATMAP TAB ── */
+  .heatmap-layout {
+    grid-template-columns: 1fr;           /* single column */
+    grid-template-rows: auto 340px;       /* sidebar then fixed-height map */
+    height: auto;
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .heatmap-sidebar {
+    max-height: 280px;                    /* limit sidebar height, it scrolls */
+    overflow-y: auto;
+  }
+
+  .heatmap-canvas-area {
+    height: 340px;                        /* fixed height so map is visible */
+  }
+
+  /* ── SAFEROUTE TAB ── */
+  .saferoute-layout {
+    grid-template-columns: 1fr;           /* single column */
+    grid-template-rows: auto 320px;       /* form then map */
+    height: auto;
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .saferoute-sidebar {
+    overflow-y: visible;
+    max-height: none;
+  }
+
+  .route-map-area {
+    height: 320px;                        /* fixed height so map shows */
+    position: relative;
+  }
+
+  #routeMap {
+    width: 100%;
+    height: 100%;
+    min-height: 320px;
+  }
+
+  /* Map idle placeholder */
+  .map-idle { font-size: 0.75rem; }
+  .map-idle div { font-size: 2rem; }
+
+}
+
+
+/* ── PHONE PORTRAIT (≤ 480px) ──────────────────────────── */
+@media (max-width: 480px) {
+
+  /* Loader title smaller on phones */
+  .loader-title { font-size: 1.6rem; letter-spacing: 4px; }
+  .loader-subtitle { font-size: 0.6rem; letter-spacing: 2px; }
+
+  /* Bottom nav icons: smaller still */
+  .nav-icon { padding: 4px 10px; font-size: 0.48rem; }
+  .nav-icon svg { width: 16px; height: 16px; }
+  .nav-icon span { display: none; }       /* hide labels, just show icons */
+
+  /* Top bar */
+  .top-bar { padding: 0 10px; }
+  .page-title { font-size: 0.85rem; letter-spacing: 1px; }
+  .system-time { font-size: 0.7rem; letter-spacing: 1px; }
+
+  /* Predict grid: tighter padding */
+  .predict-grid { padding: 8px; gap: 8px; }
+
+  /* Control panel: tighter */
+  .control-panel { padding: 12px; }
+  .ctrl-label { font-size: 0.72rem; }
+  .ctrl-field label { font-size: 0.68rem; }
+
+  /* Two-up grid: stay side by side but tighter */
+  .two-up { gap: 6px; }
+
+  /* Segmented buttons: smaller text */
+  .seg-btn { font-size: 0.58rem; padding: 5px 3px; }
+
+  /* Execute button */
+  .execute-btn { font-size: 0.72rem; padding: 10px; }
+
+  /* Welcome panel */
+  .welcome-panel { padding: 16px; gap: 12px; }
+  .network-status-header { font-size: 0.75rem; }
+
+  /* Gauge: even smaller on phones */
+  #idleGauge, #resultGauge {
+    width: 130px !important;
+    height: 130px !important;
+  }
+  .gauge-pct { font-size: 1.8rem; }
+
+  /* Network stats */
+  .net-val { font-size: 1.1rem; }
+  .network-stats { gap: 16px; }
+
+  /* Results readout */
+  .readout-value { font-size: 2rem; }
+
+  /* Analysis cards: already 1-col from tablet breakpoint */
+  .analysis-card { padding: 12px; }
+  .analysis-card-header { font-size: 0.6rem; }
+
+  /* Heatmap */
+  .heatmap-layout {
+    grid-template-rows: auto 280px;
+    padding: 8px;
+  }
+  .heatmap-canvas-area { height: 280px; }
+
+  /* Risk legend: horizontal row to save vertical space */
+  .risk-legend {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* SafeRoute */
+  .saferoute-layout {
+    grid-template-rows: auto 260px;
+    padding: 8px;
+  }
+  .route-map-area { height: 260px; }
+  #routeMap { min-height: 260px; }
+  .saferoute-sidebar { padding: 12px; }
+
+  /* Insights strip: stack vertically */
+  .insights-strip {
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  /* Analysis page */
+  .analysis-page { padding: 10px; }
+  .analysis-page-title { font-size: 0.85rem; letter-spacing: 2px; }
+
+  /* Analysis grid charts: limit canvas size */
+  .big-chart-card canvas,
+  .stat-card canvas {
+    max-width: 100%;
+    height: auto !important;
+  }
+
+  /* Context rows */
+  .context-row { padding: 8px 10px; }
+  .context-icon { width: 28px; height: 28px; font-size: 0.9rem; }
+  .context-name { font-size: 0.62rem; }
+}
+
+
+/* ── LANDSCAPE PHONE (short + wide) ────────────────────── */
+@media (max-height: 500px) and (orientation: landscape) {
+
+  /* Bottom nav: even slimmer */
+  .icon-sidebar { height: 46px; padding: 4px 12px; }
+  .main-content { height: calc(100dvh - 46px); }
+
+  /* Loader: smaller */
+  .loader-title { font-size: 1.6rem; }
+
+  /* Predict grid: side by side even on phone landscape */
+  .predict-grid {
+    grid-template-columns: 260px 1fr;
+    grid-template-rows: 1fr;
+    height: calc(100dvh - 46px - var(--topbar-h));
+    overflow: hidden;
+  }
+  .control-panel  { overflow-y: auto; }
+  .results-column { overflow-y: auto; }
+
+  /* Heatmap: side by side */
+  .heatmap-layout {
+    grid-template-columns: 200px 1fr;
+    grid-template-rows: 1fr;
+    height: calc(100dvh - 46px - var(--topbar-h));
+  }
+  .heatmap-canvas-area { height: auto; }
+
+  /* SafeRoute: side by side */
+  .saferoute-layout {
+    grid-template-columns: 240px 1fr;
+    grid-template-rows: 1fr;
+    height: calc(100dvh - 46px - var(--topbar-h));
+  }
+  .route-map-area { height: auto; }
+  #routeMap { min-height: unset; }
+}
+
+/* ============================================================
+   MOBILE SCROLL FIX
+   The main-content has overflow:hidden on desktop (right)
+   but on mobile each tab-page must scroll independently.
+   This block ensures content is never cut off.
+============================================================ */
+@media (max-width: 900px) {
+
+  /* Allow main content area to scroll vertically */
+  .main-content {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Tab pages: let them grow to content height (don't clip) */
+  .tab-page {
+    overflow: visible;
+    min-height: auto;
+  }
+
+  /* Predict tab: the grid itself should not be viewport-locked */
+  .predict-grid {
+    /* Override the vh-based height so it grows with content */
+    height: auto !important;
+    min-height: 0;
+  }
+
+  /* Results column: don't restrict height — let page scroll */
+  .results-column {
+    height: auto;
+    overflow-y: visible;
+  }
+
+  /* Control panel: no internal scroll, page handles it */
+  .control-panel {
+    height: auto;
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  /* The welcome panel doesn't need a fixed height */
+  .welcome-panel { height: auto; }
+
+  /* Gauge canvases: responsive sizing */
+  #idleGauge  { width: 160px !important; height: 160px !important; }
+  #resultGauge{ width: 160px !important; height: 160px !important; }
+
+  /* Analysis grid: force single column on mobile */
+  .analysis-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Analysis cards: auto height */
+  .big-chart-card, .stat-card, .context-card {
+    height: auto;
+  }
+
+  /* Charts inside analysis: cap width so they don't overflow */
+  #radarChart, #barChart {
+    width: 100% !important;
+    max-width: 300px;
+    height: auto !important;
+  }
+
+  #stateGauge, #localDonut {
+    width: 100% !important;
+    max-width: 200px;
+    height: 120px !important;
+  }
+
+  /* Ensure heatmap container has a real height on mobile */
+  .heatmap-canvas-area {
+    min-height: 280px;
+    height: 280px;
+  }
+  #indiaMapContainer {
+    width: 100%;
+    height: 280px;
+    min-height: 280px;
+  }
+
+  /* Route map: fixed visible height */
+  .route-map-area {
+    min-height: 300px;
+    height: 300px;
+  }
+  #routeMap {
+    width: 100%;
+    height: 300px;
+    min-height: 300px;
+    display: block;
+  }
+
+  /* Bottom nav always visible — fix to bottom */
+  .icon-sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+  }
+
+  /* Pad the bottom of main content so fixed bottom nav doesn't cover content */
+  .main-content {
+    padding-bottom: 58px;
+  }
+}
+
+@media (max-width: 480px) {
+  #idleGauge  { width: 130px !important; height: 130px !important; }
+  #resultGauge{ width: 130px !important; height: 130px !important; }
+
+  .heatmap-canvas-area { height: 250px; }
+  #indiaMapContainer   { height: 250px; min-height: 250px; }
+
+  .route-map-area { height: 260px; }
+  #routeMap       { height: 260px; min-height: 260px; }
+}
