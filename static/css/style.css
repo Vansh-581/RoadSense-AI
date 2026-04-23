@@ -291,9 +291,9 @@ html, body {
 }
 .select-box select {
   width: 100%; appearance: none;
-  background: rgba(0,229,204,0.04);
+  background: rgba(22, 57, 49, 0.04);
   border: 1px solid var(--border-teal);
-  color: var(--text); padding: 7px 28px 7px 10px;
+  color: wheat; padding: 7px 28px 7px 10px;
   border-radius: 6px; font-size: 0.78rem;
   font-family: var(--font-body); cursor: pointer; outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -302,7 +302,7 @@ html, body {
   border-color: var(--teal);
   box-shadow: 0 0 0 2px var(--teal-dim);
 }
-.select-box select option { background: #0d1a18; color: var(--text); }
+.select-box select option { background: #0d1c19; color:rgba(255, 255, 255, 0.821) ; }
 .select-box svg {
   position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
   pointer-events: none; color: var(--teal);
@@ -670,12 +670,12 @@ html, body {
 }
 
 .chart-card-title {
-  font-family: var(--font-ui); font-size: 0.7rem; font-weight: 600;
-  letter-spacing: 1.5px; color: var(--text); align-self: flex-start;
+  font-family: var(--font-ui); font-size: 0.9rem; font-weight: 600;
+  letter-spacing: 1.5px; color: wheat; align-self: flex-start;
 }
 .chart-card-sub {
-  font-family: var(--font-ui); font-size: 0.58rem; letter-spacing: 1px;
-  color: var(--text-dim); align-self: flex-start; margin-top: -4px;
+  font-family: var(--font-ui); font-size: 0.70rem; letter-spacing: 1px;
+  color: whitesmoke; align-self: flex-start; margin-top: -4px;
 }
 
 /* ============================================================
@@ -706,7 +706,7 @@ html, body {
   border-color: var(--teal-border); background: var(--glass-bright);
   transform: translateX(3px);
 }
-.state-list-name { font-family: var(--font-ui); font-size: 0.65rem; letter-spacing: 0.5px; color: var(--text-dim); }
+.state-list-name { font-family: var(--font-ui); font-size: 0.65rem; letter-spacing: 0.5px; color: wheat; }
 .state-list-score { font-family: var(--font-ui); font-size: 0.72rem; font-weight: 700; }
 
 .heatmap-canvas-area {

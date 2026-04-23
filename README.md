@@ -25,7 +25,7 @@ road_accident_app/
 
 ---
 
-## ⚙️ Setup & Run
+##  Setup & Run
 
 ### 1. Install dependencies
 
@@ -48,7 +48,7 @@ http://localhost:5000
 
 ---
 
-## 🧠 How It Works
+##  How It Works
 
 ### ML Layer
 - **Model**: `RandomForestClassifier` (150 estimators, ~94% accuracy)
@@ -81,7 +81,7 @@ Pre-computed weighted risk scores by state based on historical accident fatality
 
 ---
 
-## 🌐 API Reference
+##  API Reference
 
 ### `POST /api/predict`
 
@@ -113,9 +113,9 @@ Pre-computed weighted risk scores by state based on historical accident fatality
   "state_risk": 2.4,
   "local_score": 0.75,
   "insights": [
-    "⚠️ Rainy conditions significantly reduce visibility and traction",
-    "🌙 Nighttime driving with poor lighting increases fatal risk by 3×",
-    "🚗 High-speed travel reduces reaction time and amplifies impact severity"
+    " Rainy conditions significantly reduce visibility and traction",
+    " Nighttime driving with poor lighting increases fatal risk by 3×",
+    " High-speed travel reduces reaction time and amplifies impact severity"
   ]
 }
 ```
@@ -126,7 +126,7 @@ Returns a JSON object mapping each state to its list of cities.
 
 ---
 
-## 🎨 UI Features
+##  UI Features
 - **Dark glassmorphism design** with animated gradient mesh background
 - **Left sidebar** for all inputs with toggle groups and advanced options
 - **Right panel** for live results with animated probability bars
@@ -136,7 +136,7 @@ Returns a JSON object mapping each state to its list of cities.
 
 ---
 
-## 📦 Dependencies
+##  Dependencies
 | Package | Purpose |
 |---------|---------|
 | `flask` | Web server + REST API |
@@ -147,7 +147,7 @@ Returns a JSON object mapping each state to its list of cities.
 
 ---
 
-## ⚠️ Notes
+## Notes
 - The sklearn version warning (`1.6.1 vs 1.8.0`) is harmless — the model works correctly. To eliminate it, retrain and re-save the model with your current sklearn version.
 - Default fallback values are applied automatically for any missing inputs.
 - Cities not found in the local dataset default to a local score of `0.0`.
