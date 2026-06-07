@@ -264,57 +264,93 @@ GWEATHER_MAP = {
 
 @app.route("/api/weather")
 def get_weather():
-    city = request.args.get("city", "Delhi")
+    from datetime import date as _date, timedelta, datetime as _dt
+    city      = request.args.get("city", "Delhi")
+    date_str  = request.args.get("date", "")   # YYYY-MM-DD, optional
     try:
-        # Step 1: Geocode city → lat/lng
         lat, lng = geocode_city(city)
         if lat is None:
             raise ValueError("Could not geocode city")
 
-        # Step 2: Call Google Weather API currentConditions
-        weather_url = "https://weather.googleapis.com/v1/currentConditions:lookup"
-        params = {
-            "key":               GOOGLE_WEATHER_KEY,
-            "location.latitude":  lat,
-            "location.longitude": lng,
-            "unitsSystem":        "METRIC",
-        }
-        wresp = http_requests.get(weather_url, params=params, timeout=8)
-        wd    = wresp.json()
+        today     = _date.today()
+        use_date  = None
+        days_ahead = 0
+        if date_str:
+            try:
+                use_date  = _dt.strptime(date_str, "%Y-%m-%d").date()
+                days_ahead = (use_date - today).days
+                days_ahead = max(0, min(days_ahead, 10))   # clamp 0-10
+            except ValueError:
+                pass
 
-        if wresp.status_code != 200:
-            raise ValueError(f"Weather API error: {wd.get('error', {}).get('message', wresp.status_code)}")
+        if days_ahead == 0:
+            # ── Current conditions ──────────────────────────────────────
+            weather_url = "https://weather.googleapis.com/v1/currentConditions:lookup"
+            params = {
+                "key":                GOOGLE_WEATHER_KEY,
+                "location.latitude":  lat,
+                "location.longitude": lng,
+                "unitsSystem":        "METRIC",
+            }
+            wresp = http_requests.get(weather_url, params=params, timeout=8)
+            wd    = wresp.json()
+            if wresp.status_code != 200:
+                raise ValueError(f"Weather API error: {wd.get('error',{}).get('message', wresp.status_code)}")
 
-        # Step 3: Parse response
-        condition_type = wd.get("weatherCondition", {}).get("type", "CLEAR")
-        condition_desc = wd.get("weatherCondition", {}).get("description", {}).get("text", "Clear")
-        temp           = wd.get("temperature", {}).get("degrees", None)
-        is_daytime     = wd.get("isDaytime", True)
+            condition_type = wd.get("weatherCondition", {}).get("type", "CLEAR")
+            condition_desc = wd.get("weatherCondition", {}).get("description", {}).get("text", "Clear")
+            temp           = wd.get("temperature", {}).get("degrees", None)
+            is_daytime     = wd.get("isDaytime", True)
+            cat            = GWEATHER_MAP.get(condition_type, "Clear")
+            humidity       = wd.get("relativeHumidity", None)
+            wind_speed     = wd.get("wind", {}).get("speed", {}).get("value", None)
+            rain_prob      = wd.get("precipitation", {}).get("probability", {}).get("percent", 0)
+            source         = "google"
+        else:
+            # ── Forecast (up to 10 days) ────────────────────────────────
+            forecast_url = "https://weather.googleapis.com/v1/forecast/days:lookup"
+            params = {
+                "key":                GOOGLE_WEATHER_KEY,
+                "location.latitude":  lat,
+                "location.longitude": lng,
+                "days":               days_ahead + 1,
+                "unitsSystem":        "METRIC",
+            }
+            wresp = http_requests.get(forecast_url, params=params, timeout=8)
+            wd    = wresp.json()
+            if wresp.status_code != 200:
+                raise ValueError(f"Forecast API error: {wd.get('error',{}).get('message', wresp.status_code)}")
 
-        # Map to our app's weather categories
-        cat  = GWEATHER_MAP.get(condition_type, "Clear")
-        time = "Day" if is_daytime else "Night"
+            # Pick the day that matches our target date
+            forecast_days = wd.get("forecastDays", [])
+            target_day    = forecast_days[days_ahead] if days_ahead < len(forecast_days) else (forecast_days[-1] if forecast_days else {})
+            daytime_fc    = target_day.get("daytimeForecast", {})
 
-        # Extra context
-        humidity   = wd.get("relativeHumidity", None)
-        wind_speed = wd.get("wind", {}).get("speed", {}).get("value", None)
-        rain_prob  = wd.get("precipitation", {}).get("probability", {}).get("percent", 0)
+            condition_type = daytime_fc.get("weatherCondition", {}).get("type", "CLEAR")
+            condition_desc = daytime_fc.get("weatherCondition", {}).get("description", {}).get("text", "Forecast")
+            temp           = target_day.get("maxTemperature", {}).get("degrees", None)
+            is_daytime     = True   # forecast shows daytime by default
+            cat            = GWEATHER_MAP.get(condition_type, "Clear")
+            humidity       = daytime_fc.get("relativeHumidity", None)
+            wind_speed     = daytime_fc.get("wind", {}).get("speed", {}).get("value", None)
+            rain_prob      = daytime_fc.get("precipitation", {}).get("probability", {}).get("percent", 0)
+            source         = "google_forecast"
 
         return jsonify({
             "weather":      cat,
-            "time":         time,
-            "temp":         round(temp, 1) if temp else None,
+            "time":         "Day" if is_daytime else "Night",
+            "temp":         round(temp, 1) if temp is not None else None,
             "description":  condition_desc,
             "humidity":     humidity,
             "wind_speed":   wind_speed,
             "rain_prob":    rain_prob,
-            "source":       "google",
+            "source":       source,
             "lat":          lat,
             "lng":          lng,
+            "forecast_day": days_ahead,
         })
 
     except Exception as e:
-        # Graceful fallback — auto-detect time from system clock
         hour = pd.Timestamp.now().hour
         return jsonify({
             "weather": "Clear",
@@ -322,6 +358,317 @@ def get_weather():
             "source":  "default",
             "error":   str(e),
         })
+
+@app.route("/api/retrain", methods=["POST"])
+def retrain():
+    import time
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.preprocessing import LabelEncoder as _LE
+
+    def stream():
+        def msg(icon, text):
+            import json
+            return f"data: {json.dumps({'icon': icon, 'text': text})}\n\n"
+
+        try:
+            yield msg("📂", "Reading road_status.csv…")
+            time.sleep(0.3)
+
+            road_csv = os.path.join(BASE, "road_status.csv")
+            if os.path.exists(road_csv):
+                road_df = pd.read_csv(road_csv)
+            else:
+                road_df = pd.DataFrame(columns=["city", "road", "condition", "date"])
+
+            yield msg("🔧", "Merging with local features…")
+            time.sleep(0.3)
+
+            # Build feature order with derived columns
+            RETRAIN_FEATURES = [
+                "State Name","Time Category","Weather Conditions","Road Type",
+                "Road Condition","Lighting Conditions","Traffic Control Presence",
+                "Speed Category","Vehicle Type Involved","Age Group",
+                "Driver Gender","Driver License Status","Alcohol Involvement",
+            ]
+
+            data_csv = os.path.join(BASE, "enhanced_accident_data_v2.csv")
+            df = pd.read_csv(data_csv)
+            target_col = next(c for c in df.columns if "severity" in c.lower())
+
+            # Derive binned columns if missing
+            def parse_hour(t):
+                try: return int(str(t).split(":")[0])
+                except: return 12
+
+            def hour_to_cat(h):
+                if 6 <= h < 12:  return "Morning"
+                if 12 <= h < 18: return "Afternoon"
+                if 18 <= h < 21: return "Evening"
+                return "Night"
+
+            if "Time Category" not in df.columns:
+                df["Time Category"] = df["Time of Day"].apply(lambda t: hour_to_cat(parse_hour(t)))
+
+            if "Speed Category" not in df.columns:
+                def spd(s):
+                    try: s = float(s)
+                    except: return "Moderate"
+                    return "Low" if s < 40 else ("Moderate" if s < 80 else "High")
+                df["Speed Category"] = df["Speed Limit (km/h)"].apply(spd)
+
+            if "Age Group" not in df.columns:
+                def age(a):
+                    try: a = int(a)
+                    except: return "Adult"
+                    return "Young" if a < 25 else ("Adult" if a < 60 else "Senior")
+                df["Age Group"] = df["Driver Age"].apply(age)
+
+            # Apply road_status overrides — match on state+city+road_type (city blank = state-level)
+            if not road_df.empty and "condition" in road_df.columns:
+                def _apply_override(row):
+                    state_v = str(row.get("State Name", "")).strip().lower()
+                    city_v  = str(row.get("City Name",  "")).strip().lower()
+                    rtype_v = str(row.get("Road Type",  "")).strip().lower()
+                    for _, rs in road_df.iterrows():
+                        rs_state = str(rs.get("state", "")).strip().lower()
+                        rs_city  = str(rs.get("city",  "")).strip().lower()
+                        rs_road  = str(rs.get("road_name", "")).strip().lower()
+                        state_match = (rs_state == state_v)
+                        city_match  = (rs_city == "" or rs_city == city_v)
+                        road_match  = (rs_road == "" or rs_road == rtype_v)
+                        if state_match and city_match and road_match:
+                            return rs["condition"]
+                    return row.get("Road Condition", "Dry")
+                df["Road Condition"] = df.apply(_apply_override, axis=1)
+
+            yield msg("🤖", "Fitting RandomForest model…")
+            time.sleep(0.3)
+
+            feature_cols = [c for c in RETRAIN_FEATURES if c in df.columns]
+            df = df[feature_cols + [target_col]].dropna()
+
+            new_encoders = {}
+            for col in feature_cols:
+                le = _LE()
+                df[col] = le.fit_transform(df[col].astype(str))
+                new_encoders[col] = le
+
+            y = _LE().fit_transform(df[target_col].astype(str))
+            clf = RandomForestClassifier(n_estimators=200, max_depth=12, random_state=42, n_jobs=-1)
+            clf.fit(df[feature_cols], y)
+
+            yield msg("💾", "Writing model.pkl…")
+            time.sleep(0.2)
+
+            joblib.dump(clf,          os.path.join(BASE, "model.pkl"))
+            joblib.dump(new_encoders, os.path.join(BASE, "encoders.pkl"))
+
+            # Reload into running app
+            global model, encoders
+            model    = clf
+            encoders = new_encoders
+
+            yield msg("📊", "Updating local_features.csv…")
+            time.sleep(0.2)
+
+            # Touch a retrain log so the UI can show last-retrain time
+            log_path = os.path.join(BASE, "retrain_log.txt")
+            with open(log_path, "w") as f:
+                f.write(pd.Timestamp.now().isoformat())
+
+            import json
+            yield f"data: {json.dumps({'done': True, 'message': 'Model retrained successfully'})}\n\n"
+
+        except Exception as e:
+            import json, traceback
+            traceback.print_exc()
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return app.response_class(stream(), mimetype="text/event-stream",
+                               headers={"Cache-Control": "no-cache",
+                                        "X-Accel-Buffering": "no"})
+
+
+@app.route("/api/retrain-status")
+def retrain_status():
+    log_path = os.path.join(BASE, "retrain_log.txt")
+    last = None
+    if os.path.exists(log_path):
+        with open(log_path) as f:
+            last = f.read().strip()
+    road_csv = os.path.join(BASE, "road_status.csv")
+    count = 0
+    if os.path.exists(road_csv):
+        try:
+            count = len(pd.read_csv(road_csv))
+        except:
+            pass
+    return jsonify({"last_retrain": last, "road_entries": count})
+
+
+# ── Admin: Road Status ────────────────────────────────────────────────────────
+
+ROAD_CSV = os.path.join(BASE, "road_status.csv")
+
+def _load_road_df():
+    if os.path.exists(ROAD_CSV):
+        try:
+            return pd.read_csv(ROAD_CSV)
+        except:
+            pass
+    return pd.DataFrame(columns=["city", "road_name", "condition", "last_updated"])
+
+
+@app.route("/api/road-status-lookup")
+def road_status_lookup():
+    """Return road_status entry for state + city + road_type."""
+    state     = request.args.get("state",     "").strip().lower()
+    city      = request.args.get("city",      "").strip().lower()
+    road_type = request.args.get("road_type", "").strip().lower()
+    df        = _load_road_df()
+    if df.empty:
+        return jsonify({"entries": []})
+
+    results = []
+    for _, row in df.iterrows():
+        rs_state = str(row.get("state",     "")).strip().lower()
+        rs_city  = str(row.get("city",      "")).strip().lower()
+        rs_road  = str(row.get("road_name", "")).strip().lower()
+        # city blank in admin entry = state-level fallback
+        if rs_state == state and (rs_city == "" or rs_city == city) and rs_road == road_type:
+            results.append({
+                "road_type": row.get("road_name",    ""),
+                "condition": row.get("condition",    "Dry"),
+                "city":      row.get("city",         ""),
+                "updated":   row.get("last_updated", ""),
+            })
+    # city-specific beats state-level
+    results.sort(key=lambda r: 0 if r["city"] else 1)
+    return jsonify({"entries": results})
+
+def _save_road_df(df):
+    df.to_csv(ROAD_CSV, index=False)
+
+
+@app.route("/api/admin/road-status", methods=["GET"])
+def admin_road_status_get():
+    df = _load_road_df()
+    log_path = os.path.join(BASE, "retrain_log.txt")
+    last_trained = None
+    if os.path.exists(log_path):
+        with open(log_path) as f:
+            last_trained = f.read().strip()
+    return jsonify({
+        "rows": df.to_dict(orient="records"),
+        "last_trained": last_trained,
+    })
+
+
+@app.route("/api/admin/road-status", methods=["POST"])
+def admin_road_status_post():
+    data = request.get_json(force=True)
+    rows = data.get("rows")
+    if rows is not None:
+        df = pd.DataFrame(rows) if rows else pd.DataFrame(
+            columns=["city", "road_name", "condition", "last_updated"])
+        _save_road_df(df)
+        return jsonify({"ok": True, "entries": len(df)})
+    return jsonify({"error": "No rows provided"}), 400
+
+
+# ── Admin: Retrain ────────────────────────────────────────────────────────────
+
+@app.route("/api/admin/retrain", methods=["POST"])
+def admin_retrain():
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.preprocessing import LabelEncoder as _LE
+    try:
+        RETRAIN_FEATURES = [
+            "State Name", "Time Category", "Weather Conditions", "Road Type",
+            "Road Condition", "Lighting Conditions", "Traffic Control Presence",
+            "Speed Category", "Vehicle Type Involved", "Age Group",
+            "Driver Gender", "Driver License Status", "Alcohol Involvement",
+        ]
+
+        data_csv = os.path.join(BASE, "enhanced_accident_data_v2.csv")
+        df = pd.read_csv(data_csv)
+        target_col = next(c for c in df.columns if "severity" in c.lower())
+
+        def parse_hour(t):
+            try: return int(str(t).split(":")[0])
+            except: return 12
+
+        def hour_to_cat(h):
+            if 6 <= h < 12:  return "Morning"
+            if 12 <= h < 18: return "Afternoon"
+            if 18 <= h < 21: return "Evening"
+            return "Night"
+
+        if "Time Category" not in df.columns:
+            df["Time Category"] = df["Time of Day"].apply(lambda t: hour_to_cat(parse_hour(t)))
+
+        if "Speed Category" not in df.columns:
+            def spd(s):
+                try: s = float(s)
+                except: return "Moderate"
+                return "Low" if s < 40 else ("Moderate" if s < 80 else "High")
+            df["Speed Category"] = df["Speed Limit (km/h)"].apply(spd)
+
+        if "Age Group" not in df.columns:
+            def age(a):
+                try: a = int(a)
+                except: return "Adult"
+                return "Young" if a < 25 else ("Adult" if a < 60 else "Senior")
+            df["Age Group"] = df["Driver Age"].apply(age)
+
+        # Apply road_status overrides — match on state+city+road_type (city blank = state-level)
+        road_df = _load_road_df()
+        if not road_df.empty and "condition" in road_df.columns:
+            def _apply_override2(row):
+                state_v = str(row.get("State Name", "")).strip().lower()
+                city_v  = str(row.get("City Name",  "")).strip().lower()
+                rtype_v = str(row.get("Road Type",  "")).strip().lower()
+                for _, rs in road_df.iterrows():
+                    rs_state = str(rs.get("state", "")).strip().lower()
+                    rs_city  = str(rs.get("city",  "")).strip().lower()
+                    rs_road  = str(rs.get("road_name", "")).strip().lower()
+                    if (rs_state == state_v and
+                        (rs_city == "" or rs_city == city_v) and
+                        (rs_road == "" or rs_road == rtype_v)):
+                        return rs["condition"]
+                return row.get("Road Condition", "Dry")
+            df["Road Condition"] = df.apply(_apply_override2, axis=1)
+
+        feature_cols = [c for c in RETRAIN_FEATURES if c in df.columns]
+        df = df[feature_cols + [target_col]].dropna()
+
+        new_encoders = {}
+        for col in feature_cols:
+            le = _LE()
+            df[col] = le.fit_transform(df[col].astype(str))
+            new_encoders[col] = le
+
+        y = _LE().fit_transform(df[target_col].astype(str))
+        clf = RandomForestClassifier(n_estimators=200, max_depth=12, random_state=42, n_jobs=-1)
+        clf.fit(df[feature_cols], y)
+
+        joblib.dump(clf,          os.path.join(BASE, "model.pkl"))
+        joblib.dump(new_encoders, os.path.join(BASE, "encoders.pkl"))
+
+        global model, encoders
+        model    = clf
+        encoders = new_encoders
+
+        log_path = os.path.join(BASE, "retrain_log.txt")
+        with open(log_path, "w") as f:
+            f.write(pd.Timestamp.now().strftime("%d %b %Y, %H:%M"))
+
+        return jsonify({"ok": True, "message": "Model retrained successfully"})
+
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

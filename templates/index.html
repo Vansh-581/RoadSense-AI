@@ -7,6 +7,25 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="/static/css/style.css"/>
+  <style>
+    .ac-wrap { position: relative; }
+    .ac-dropdown {
+      display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 999;
+      background: #0d1f2d; border: 1px solid #00e5cc44; border-top: none;
+      border-radius: 0 0 6px 6px; max-height: 180px; overflow-y: auto;
+      list-style: none; margin: 0; padding: 0;
+    }
+    .ac-dropdown.open { display: block; }
+    .ac-dropdown li {
+      padding: 8px 12px; font-size: 12px; color: #c0d8e8; cursor: pointer;
+      border-bottom: 1px solid #ffffff08; letter-spacing: 0.03em;
+    }
+    .ac-dropdown li:last-child { border-bottom: none; }
+    .ac-dropdown li:hover, .ac-dropdown li.ac-active {
+      background: #00e5cc18; color: #00e5cc;
+    }
+    .ac-dropdown li em { color: #00e5cc; font-style: normal; font-weight: 600; }
+  </style>
 </head>
 <body>
 
@@ -65,6 +84,10 @@
         <button class="nav-icon" data-tab="saferoute" title="SafeRoute">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
           <span>SAFEROUTE</span>
+        </button>
+        <button class="nav-icon" data-tab="admin" title="Admin Dashboard">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M19 8l2 2-2 2"/><path d="M22 10h-3"/></svg>
+          <span>ADMIN</span>
         </button>
       </div>
 
@@ -142,6 +165,14 @@
               <!-- Environmental conditions -->
               <div class="ctrl-section">
                 <div class="ctrl-label">ENVIRONMENTAL</div>
+                <div class="ctrl-field">
+                  <label>Travel Date</label>
+                  <div class="date-input-wrap">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <input type="date" id="travelDateInput" name="travel_date" class="date-input"/>
+                  </div>
+                  <div class="date-forecast-note" id="dateForecastNote" style="display:none">📅 Showing forecast for selected date</div>
+                </div>
                 <div class="two-up">
                   <div class="ctrl-field">
                     <label>Time</label>
@@ -179,6 +210,7 @@
               <!-- Traffic & road -->
               <div class="ctrl-section">
                 <div class="ctrl-label">TRAFFIC FLOW</div>
+                <div id="roadStatusChip" style="display:none;align-items:center;gap:4px;font-size:11px;color:var(--accent);background:rgba(0,229,204,0.08);border:1px solid rgba(0,229,204,0.2);border-radius:6px;padding:6px 10px;margin-bottom:8px;"></div>
                 <div class="two-up">
                   <div class="ctrl-field">
                     <label>Road Type</label>
@@ -192,10 +224,11 @@
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
                     </div>
                   </div>
-                  <div class="ctrl-field">
+                  <!-- Road condition: auto-filled from admin data; manual select shown only if no entry found -->
+                  <div class="ctrl-field" id="roadCondManualWrap" style="display:none">
                     <label>Surface</label>
                     <div class="select-box">
-                      <select name="road_condition">
+                      <select name="road_condition" id="roadCondSelect">
                         <option value="Dry">Dry</option>
                         <option value="Wet">Wet</option>
                         <option value="Damaged">Damaged</option>
@@ -204,6 +237,7 @@
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
                     </div>
                   </div>
+                  <input type="hidden" name="road_condition" id="roadCondHidden" value="Dry"/>
                 </div>
                 <div class="two-up">
                   <div class="ctrl-field">
@@ -264,7 +298,27 @@
                     </div>
                   </div>
                 </div>
-                <div class="two-up">
+                <div class="ctrl-field">
+                  <label>License</label>
+                  <div class="select-box">
+                    <select name="license">
+                      <option value="Valid">Valid</option>
+                      <option value="Expired">Expired</option>
+                      <option value="Unknown">Unknown</option>
+                    </select>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ADVANCED FILTERS (collapsed by default) -->
+              <div class="ctrl-section adv-filter-section">
+                <button type="button" class="adv-filter-toggle" id="advFilterToggle">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                  ADVANCED FILTERS
+                </button>
+                <div class="adv-filter-body" id="advFilterBody">
+                  <!-- Gender -->
                   <div class="ctrl-field">
                     <label>Gender</label>
                     <div class="seg-control" id="genderToggle">
@@ -273,25 +327,15 @@
                     </div>
                     <input type="hidden" id="genderInput" name="gender" value="Male"/>
                   </div>
+                  <!-- Alcohol -->
                   <div class="ctrl-field">
-                    <label>License</label>
-                    <div class="select-box">
-                      <select name="license">
-                        <option value="Valid">Valid</option>
-                        <option value="Expired">Expired</option>
-                        <option value="Unknown">Unknown</option>
-                      </select>
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    <label>Alcohol Involved</label>
+                    <div class="seg-control" id="alcoholToggle">
+                      <button type="button" class="seg-btn active" data-val="No">NO</button>
+                      <button type="button" class="seg-btn seg-danger" data-val="Yes">YES ⚠</button>
                     </div>
+                    <input type="hidden" id="alcoholInput" name="alcohol" value="No"/>
                   </div>
-                </div>
-                <div class="ctrl-field">
-                  <label>Alcohol Involved</label>
-                  <div class="seg-control" id="alcoholToggle">
-                    <button type="button" class="seg-btn active" data-val="No">NO</button>
-                    <button type="button" class="seg-btn seg-danger" data-val="Yes">YES ⚠</button>
-                  </div>
-                  <input type="hidden" id="alcoholInput" name="alcohol" value="No"/>
                 </div>
               </div>
 
@@ -586,9 +630,178 @@
         </div>
       </div>
 
-    </div><!-- end main-content -->
-  </div><!-- end app-shell -->
+      <!-- ====================================================
+           TAB 5 — ADMIN DASHBOARD
+      ===================================================== -->
+      <div class="tab-page" id="tab-admin">
+        <div class="admin-layout">
 
+          <!-- LEFT: Road Status Table Editor -->
+          <div class="admin-left glass-panel">
+            <div class="panel-header">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00e5cc" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              ROAD STATUS MANAGER
+            </div>
+            <p class="admin-hint">Edit road conditions. Changes update the model's risk context on retrain.</p>
+
+            <!-- Add new row form -->
+            <div class="admin-add-form">
+              <div class="admin-form-title">ADD / UPDATE ENTRY</div>
+              <div class="two-up">
+                <div class="ctrl-field">
+                  <label>State</label>
+                  <div class="select-box">
+                    <select id="adminState">
+                      <option value="">— Select State —</option>
+                    </select>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                </div>
+                <div class="ctrl-field">
+                  <label>City <span id="adminCityNote" style="font-size:10px;opacity:.5">(if applicable)</span></label>
+                  <div class="select-box">
+                    <select id="adminCity" disabled>
+                      <option value="">— Select State first —</option>
+                    </select>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                </div>
+              </div>
+              <div class="two-up">
+                <div class="ctrl-field">
+                  <label>Road Type</label>
+                  <div class="select-box">
+                    <select id="adminRoadName">
+                      <option value="National Highway">National Highway</option>
+                      <option value="State Highway">State Highway</option>
+                      <option value="Urban Road">Urban Road</option>
+                      <option value="Village Road">Village Road</option>
+                    </select>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                </div>
+                <div class="ctrl-field">
+                  <label>Condition</label>
+                  <div class="select-box">
+                    <select id="adminCondition">
+                      <option value="Dry">Dry</option>
+                      <option value="Wet">Wet</option>
+                      <option value="Damaged">Damaged</option>
+                      <option value="Under Construction">Under Construction</option>
+                    </select>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                </div>
+              </div>
+              <div class="two-up" style="grid-template-columns:1fr;">
+                <div class="ctrl-field">
+                  <label>Date</label>
+                  <div class="date-input-wrap">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <input type="date" id="adminDate" class="date-input" max=""/>
+                  </div>
+                </div>
+              </div>
+              <button class="execute-btn" id="adminAddBtn" style="margin-top:8px">
+                <span class="exec-normal">+ SAVE ENTRY</span>
+                <span class="exec-loading" style="display:none"><span class="exec-spinner"></span>SAVING…</span>
+              </button>
+            </div>
+
+            <!-- Road status table -->
+            <div class="admin-table-wrap">
+              <table class="admin-table" id="roadStatusTable">
+                <thead>
+                  <tr>
+                    <th>STATE</th>
+                    <th>CITY</th>
+                    <th>ROAD</th>
+                    <th>CONDITION</th>
+                    <th>UPDATED</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="roadStatusBody">
+                  <tr><td colspan="5" class="admin-empty">Loading…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- RIGHT: Retrain + Stats -->
+          <div class="admin-right">
+
+            <!-- Model retrain card -->
+            <div class="glass-panel admin-retrain-card">
+              <div class="panel-header">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00e5cc" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                MODEL RETRAINING
+              </div>
+              <p class="admin-hint">Retrain the accident severity model using the latest road status data. This updates <code>model.pkl</code> and refreshes local features.</p>
+
+              <div class="retrain-status-row" id="retrainStatusRow" style="display:none">
+                <div class="retrain-log" id="retrainLog"></div>
+              </div>
+
+              <div class="retrain-stats" id="retrainStats">
+                <div class="retrain-stat">
+                  <span class="rstat-val" id="rstatRecords">—</span>
+                  <span class="rstat-key">ROAD ENTRIES</span>
+                </div>
+                <div class="retrain-stat">
+                  <span class="rstat-val" id="rstatLastTrain">—</span>
+                  <span class="rstat-key">LAST RETRAIN</span>
+                </div>
+                <div class="retrain-stat">
+                  <span class="rstat-val" id="rstatStatus">READY</span>
+                  <span class="rstat-key">MODEL STATUS</span>
+                </div>
+              </div>
+
+              <button class="execute-btn retrain-btn" id="retrainBtn">
+                <span class="exec-normal">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                  RETRAIN MODEL
+                </span>
+                <span class="exec-loading" style="display:none"><span class="exec-spinner"></span>TRAINING…</span>
+              </button>
+            </div>
+
+            <!-- Condition distribution mini chart -->
+            <div class="glass-panel admin-condition-card">
+              <div class="panel-header">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00e5cc" stroke-width="2"><path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 4v16"/></svg>
+                CONDITION DISTRIBUTION
+              </div>
+              <div class="condition-bars" id="conditionBars"></div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end main-content -->
+
+
+  <!-- ADMIN LOGIN MODAL -->
+  <div class="modal-overlay" id="adminLoginOverlay" style="display:none">
+    <div class="modal-box glass-panel">
+      <div class="modal-header">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00e5cc" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        ADMIN ACCESS
+      </div>
+      <p class="modal-hint">Enter the admin password to continue.</p>
+      <div class="date-input-wrap" style="margin-top:10px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input type="password" id="adminPassInput" class="date-input" placeholder="Password" autocomplete="current-password"/>
+      </div>
+      <div class="modal-error" id="adminPassError" style="display:none">⚠ Incorrect password</div>
+      <div class="modal-actions">
+        <button class="execute-btn" id="adminPassSubmit" style="margin-top:12px">UNLOCK</button>
+        <button class="modal-cancel" id="adminPassCancel">CANCEL</button>
+      </div>
+    </div>
+  </div>
 
   <script>window.GOOGLE_API_KEY = "{{ google_api_key }}";</script>
   <script src="/static/js/script.js"></script>

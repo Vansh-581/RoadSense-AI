@@ -166,6 +166,7 @@ const PAGE_META = {
   analysis:  { title: "ROUTE SAFETY ANALYSIS", sub: "GRAPHICAL RISK BREAKDOWN" },
   heatmap:   { title: "NETWORK HEATMAP",   sub: "STATE RISK INDEX" },
   saferoute: { title: "ROUTE PLANNER",     sub: "SAFEROUTE AI MODULE" },
+  admin:     { title: "ADMIN DASHBOARD",   sub: "ROAD STATUS & MODEL MANAGEMENT" },
 };
 
 function setupTabs() {
@@ -194,6 +195,15 @@ function setupTabs() {
          Without this the map renders grey/blank on mobile. */
       if (tabName === "saferoute" && typeof google !== "undefined" && gMap) {
         setTimeout(() => google.maps.event.trigger(gMap, "resize"), 150);
+      }
+
+      /* Admin: require password before opening */
+      if (tabName === "admin") {
+        if (!window._adminUnlocked) {
+          showAdminLogin();
+          return; /* don't switch tab yet */
+        }
+        loadRoadStatus();
       }
 
       /* Heatmap: SVG map uses container dimensions — rebuild when tab opens
@@ -382,12 +392,145 @@ el("stateSelect").addEventListener("change", function () {
 
   /* Auto-fetch weather for first city when state changes */
   const firstCity = (cityData[this.value] || [])[0];
-  if (firstCity) fetchWeather(firstCity, "predict");
+  if (firstCity) {
+    const dateIn = el("travelDateInput");
+    fetchWeather(firstCity, "predict", dateIn ? dateIn.value : null);
+  }
 });
 
-el("citySelect").addEventListener("change", function () {
-  if (this.value) fetchWeather(this.value, "predict");
+// citySelect change is handled in the road status section below
+
+
+/* When road type changes → re-fetch road status for state + city + road type */
+const roadTypeSelectEl = document.querySelector('select[name="road_type"]');
+roadTypeSelectEl && roadTypeSelectEl.addEventListener("change", function () {
+  fetchRoadStatus(el("stateSelect").value, el("citySelect").value, this.value);
 });
+
+el("stateSelect").addEventListener("change", function () {
+  const rtype = document.querySelector('select[name="road_type"]');
+  if (rtype) fetchRoadStatus(this.value, el("citySelect").value, rtype.value);
+});
+
+el("citySelect") && el("citySelect").addEventListener("change", function () {
+  if (this.value) {
+    const dateIn = el("travelDateInput");
+    fetchWeather(this.value, "predict", dateIn ? dateIn.value : null);
+  }
+  const rtype = document.querySelector('select[name="road_type"]');
+  if (rtype) fetchRoadStatus(el("stateSelect").value, this.value, rtype.value);
+});
+
+
+/* ============================================================
+   ROAD STATUS AUTO-FILL — state + city + road_type
+============================================================ */
+async function fetchRoadStatus(state, city, roadType) {
+  const roadCondHidden = el("roadCondHidden");
+  const roadCondManual = el("roadCondManualWrap");
+  const roadCondSelect = el("roadCondSelect");
+  const chipEl         = el("roadStatusChip");
+
+  // Reset
+  if (roadCondManual) roadCondManual.style.display = "none";
+  if (roadCondHidden) { roadCondHidden.disabled = false; roadCondHidden.value = "Dry"; }
+  if (chipEl)         chipEl.style.display = "none";
+
+  if (!state || !roadType) {
+    if (roadCondManual) roadCondManual.style.display = "";
+    if (roadCondHidden) roadCondHidden.disabled = true;
+    return;
+  }
+
+  try {
+    const url  = `/api/road-status-lookup?state=${encodeURIComponent(state)}&city=${encodeURIComponent(city || "")}&road_type=${encodeURIComponent(roadType)}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    const entry = (data.entries || [])[0];
+
+    if (!entry) {
+      if (roadCondManual) roadCondManual.style.display = "";
+      if (roadCondHidden) roadCondHidden.disabled = true;
+      return;
+    }
+
+    if (roadCondHidden) { roadCondHidden.value = entry.condition; roadCondHidden.disabled = false; }
+    if (roadCondManual) roadCondManual.style.display = "none";
+
+    if (chipEl) {
+      chipEl.style.display = "flex";
+      chipEl.innerHTML = `
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Road data from admin &nbsp;·&nbsp; <strong>${entry.road_type}</strong> &nbsp;·&nbsp; <strong>${entry.condition}</strong>
+        ${entry.updated ? `<span style="opacity:.5;font-size:10px;margin-left:4px">· ${entry.updated}</span>` : ""}
+        <button id="roadStatusOverrideBtn" style="margin-left:8px;background:none;border:none;color:var(--accent);cursor:pointer;font-size:10px;padding:0;opacity:.7">unlock</button>
+      `;
+      el("roadStatusOverrideBtn") && el("roadStatusOverrideBtn").addEventListener("click", () => {
+        if (roadCondManual) roadCondManual.style.display = "";
+        if (roadCondHidden) roadCondHidden.disabled = true;
+        if (roadCondSelect && entry.condition) roadCondSelect.value = entry.condition;
+        chipEl.style.display = "none";
+      });
+    }
+  } catch(e) {
+    if (roadCondManual) roadCondManual.style.display = "";
+    if (roadCondHidden) roadCondHidden.disabled = true;
+  }
+}
+  const roadCondHidden  = el("roadCondHidden");
+  const roadCondManual  = el("roadCondManualWrap");
+  const roadCondSelect  = el("roadCondSelect");
+  const chipEl          = el("roadStatusChip");
+
+  // Reset
+  if (roadCondManual) roadCondManual.style.display = "none";
+  if (roadCondHidden) { roadCondHidden.disabled = false; roadCondHidden.value = "Dry"; }
+  if (chipEl)         chipEl.style.display = "none";
+
+  if (!state || !roadType) {
+    if (roadCondManual) roadCondManual.style.display = "";
+    if (roadCondHidden) roadCondHidden.disabled = true;
+    return;
+  }
+
+  try {
+    const res     = await fetch(`/api/road-status-lookup?state=${encodeURIComponent(state)}&road_type=${encodeURIComponent(roadType)}`);
+    const data    = await res.json();
+    const entries = data.entries || [];
+    const entry   = entries[0];
+
+    if (!entry) {
+      // No admin data — show manual select
+      if (roadCondManual) roadCondManual.style.display = "";
+      if (roadCondHidden) roadCondHidden.disabled = true;
+      return;
+    }
+
+    // Auto-fill hidden input, hide manual select
+    if (roadCondHidden) { roadCondHidden.value = entry.condition; roadCondHidden.disabled = false; }
+    if (roadCondManual) roadCondManual.style.display = "none";
+
+    // Show chip
+    if (chipEl) {
+      chipEl.style.display = "flex";
+      chipEl.innerHTML = `
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Road data from admin &nbsp;·&nbsp; <strong>${entry.road_type}</strong> &nbsp;·&nbsp; <strong>${entry.condition}</strong>
+        ${entry.updated ? `<span style="opacity:.5;font-size:10px;margin-left:4px">· ${entry.updated}</span>` : ""}
+        <button id="roadStatusOverrideBtn" style="margin-left:8px;background:none;border:none;color:var(--accent);cursor:pointer;font-size:10px;padding:0;opacity:.7">unlock</button>
+      `;
+      el("roadStatusOverrideBtn") && el("roadStatusOverrideBtn").addEventListener("click", () => {
+        if (roadCondManual) { roadCondManual.style.display = ""; }
+        if (roadCondHidden) { roadCondHidden.disabled = true; }
+        if (roadCondSelect && entry.condition) roadCondSelect.value = entry.condition;
+        chipEl.style.display = "none";
+      });
+    }
+  } catch(e) {
+    if (roadCondManual) roadCondManual.style.display = "";
+    if (roadCondHidden) roadCondHidden.disabled = true;
+  }
+}
 
 
 /* ============================================================
@@ -397,9 +540,11 @@ el("citySelect").addEventListener("change", function () {
 let predictWeather  = null;
 let saferouteWeather = null;
 
-async function fetchWeather(cityName, target) {
+async function fetchWeather(cityName, target, date) {
   try {
-    const res  = await fetch(`/api/weather?city=${encodeURIComponent(cityName)}`);
+    let url = `/api/weather?city=${encodeURIComponent(cityName)}`;
+    if (date) url += `&date=${date}`;
+    const res  = await fetch(url);
     const data = await res.json();
 
     if (target === "predict") {
@@ -416,13 +561,16 @@ async function fetchWeather(cityName, target) {
 
 function showWeatherChip(chipId, textId, data) {
   const chip = el(chipId);
-  if (data.source === "google") {
-    let text = data.description || "Live weather";
-    if (data.temp     != null) text += ` · ${data.temp}°C`;
-    if (data.humidity != null) text += ` · 💧${data.humidity}%`;
-    if (data.rain_prob > 0)    text += ` · ${data.rain_prob}% rain`;
+  if (data.source === "google" || data.source === "google_forecast") {
+    let text = data.description || "Weather";
+    if (data.forecast_day > 0) text = "📅 Day +" + data.forecast_day + ": " + text;
+    if (data.temp     != null) text += " · " + data.temp + "°C";
+    if (data.humidity != null) text += " · 💧" + data.humidity + "%";
+    if (data.rain_prob > 0)    text += " · " + data.rain_prob + "% rain";
     el(textId).textContent = text;
     chip.style.display = "flex";
+    const note = el("dateForecastNote");
+    if (note) note.style.display = (data.forecast_day > 0) ? "block" : "none";
   } else {
     autoSetTime(chipId.includes("sr") ? "saferoute" : "predict");
     chip.style.display = "none";
@@ -444,8 +592,12 @@ function applyWeather(data, target) {
     const lightSel = document.querySelector('select[name="lighting"]');
     if (lightSel) lightSel.value = data.time === "Night" ? "Dark" : "Daylight";
     if (data.weather === "Rainy" || data.weather === "Stormy") {
-      const road = document.querySelector('select[name="road_condition"]');
-      if (road) road.value = "Wet";
+      const roadHidden = el("roadCondHidden");
+      const roadManual = el("roadCondSelect");
+      const manualWrap = el("roadCondManualWrap");
+      // Only override if not already locked by admin data
+      if (manualWrap && manualWrap.style.display !== "none" && roadManual) roadManual.value = "Wet";
+      if (roadHidden && !roadHidden.disabled) roadHidden.value = "Wet";
     }
     el("weatherChip").style.display = "none";
   } else {
@@ -487,6 +639,15 @@ el("predictForm").addEventListener("submit", async function (e) {
   const btn = el("predictBtn");
   setLoading(btn, true);
   el("errorBanner").style.display = "none";
+
+  // If manual surface select is visible, sync its value to the hidden input
+  const manualWrap   = el("roadCondManualWrap");
+  const roadCondSel  = el("roadCondSelect");
+  const roadCondHid  = el("roadCondHidden");
+  if (manualWrap && manualWrap.style.display !== "none" && roadCondSel && roadCondHid) {
+    roadCondHid.value    = roadCondSel.value;
+    roadCondHid.disabled = false;
+  }
 
   /* Collect all form values */
   const payload = {};
@@ -1171,6 +1332,412 @@ function darkMapStyles() {
     {featureType:"administrative",elementType:"geometry.stroke", stylers:[{color:"#1a3530"}]},
   ];
 }
+
+
+/* ============================================================
+   SECTION 12a — ADMIN LOGIN MODAL
+============================================================ */
+const ADMIN_PASSWORD = "roadsense@admin"; // Change this to your preferred password
+
+window._adminUnlocked = false;
+
+function showAdminLogin() {
+  el("adminLoginOverlay").style.display = "flex";
+  el("adminPassInput").value = "";
+  el("adminPassError").style.display = "none";
+  setTimeout(() => el("adminPassInput").focus(), 100);
+}
+
+function hideAdminLogin() {
+  el("adminLoginOverlay").style.display = "none";
+}
+
+function tryAdminLogin() {
+  const val = el("adminPassInput").value;
+  if (val === ADMIN_PASSWORD) {
+    window._adminUnlocked = true;
+    hideAdminLogin();
+    /* Now actually switch to admin tab */
+    all(".nav-icon").forEach(b => b.classList.remove("active"));
+    all(".tab-page").forEach(p => p.classList.remove("active"));
+    document.querySelector("[data-tab=admin]").classList.add("active");
+    el("tab-admin").classList.add("active");
+    el("pageTitle").textContent    = PAGE_META.admin.title;
+    el("pageSubtitle").textContent = PAGE_META.admin.sub;
+    loadRoadStatus();
+  } else {
+    el("adminPassError").style.display = "block";
+    el("adminPassInput").value = "";
+    el("adminPassInput").focus();
+  }
+}
+
+el("adminPassSubmit") && el("adminPassSubmit").addEventListener("click", tryAdminLogin);
+el("adminPassCancel") && el("adminPassCancel").addEventListener("click", () => {
+  hideAdminLogin();
+  /* Revert nav icon to previously active tab */
+  const prevActive = document.querySelector(".nav-icon.was-active") || document.querySelector("[data-tab=predict]");
+  prevActive.click();
+});
+el("adminPassInput") && el("adminPassInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") tryAdminLogin();
+  if (e.key === "Escape") { hideAdminLogin(); }
+});
+
+/* ============================================================
+   SECTION 12b — ADVANCED FILTER TOGGLE
+============================================================ */
+(function setupAdvFilter() {
+  const toggle = el("advFilterToggle");
+  const body   = el("advFilterBody");
+  if (!toggle || !body) return;
+  toggle.addEventListener("click", () => {
+    const open = body.classList.toggle("open");
+    toggle.classList.toggle("open", open);
+  });
+})();
+
+/* ── Travel date: restrict to today → today+10, wire forecast fetch ── */
+(function setupTravelDate() {
+  const dateIn = el("travelDateInput");
+  if (!dateIn) return;
+
+  const today = new Date();
+  const max   = new Date(today);
+  max.setDate(today.getDate() + 10);
+
+  const fmt = d => d.toISOString().split("T")[0];
+  dateIn.min   = fmt(today);
+  dateIn.max   = fmt(max);
+  dateIn.value = fmt(today);
+
+  dateIn.addEventListener("change", () => {
+    const city = el("citySelect").value;
+    if (!city) return;
+    const note = el("dateForecastNote");
+    const isToday = dateIn.value === fmt(new Date());
+    if (note) note.style.display = isToday ? "none" : "block";
+    fetchWeather(city, "predict", dateIn.value);
+  });
+})();
+
+
+/* ============================================================
+   SECTION 12c — ADMIN DASHBOARD
+============================================================ */
+let roadStatusData = []; // In-memory store for road_status.csv data
+
+// ── Admin date: cap to today ──────────────────────────────────────────────────
+(function() {
+  const d = el("adminDate");
+  if (d) {
+    const today = new Date().toISOString().split("T")[0];
+    d.max   = today;
+    d.value = today;
+  }
+})();
+
+// ── Autocomplete helper ───────────────────────────────────────────────────────
+const INDIAN_STATES = [
+  "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chandigarh",
+  "Chhattisgarh","Delhi","Goa","Gujarat","Haryana","Himachal Pradesh",
+  "Jammu & Kashmir","Jharkhand","Karnataka","Kerala","Madhya Pradesh",
+  "Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha",
+  "Puducherry","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana",
+  "Tripura","Uttar Pradesh","Uttarakhand","West Bengal"
+];
+
+const CITY_STATE_LIST = [
+  {city:"Jammu",state:"Jammu & Kashmir"},{city:"Samba",state:"Jammu & Kashmir"},{city:"Rajouri",state:"Jammu & Kashmir"},{city:"Srinagar",state:"Jammu & Kashmir"},{city:"Anantnag",state:"Jammu & Kashmir"},{city:"Baramulla",state:"Jammu & Kashmir"},{city:"Kupwara",state:"Jammu & Kashmir"},
+  {city:"Delhi",state:"Delhi"},{city:"Noida",state:"Uttar Pradesh"},{city:"Gurgaon",state:"Haryana"},{city:"Faridabad",state:"Haryana"},{city:"Ghaziabad",state:"Uttar Pradesh"},
+  {city:"Jaipur",state:"Rajasthan"},{city:"Udaipur",state:"Rajasthan"},{city:"Jodhpur",state:"Rajasthan"},{city:"Kota",state:"Rajasthan"},{city:"Bikaner",state:"Rajasthan"},{city:"Ajmer",state:"Rajasthan"},
+  {city:"Lucknow",state:"Uttar Pradesh"},{city:"Kanpur",state:"Uttar Pradesh"},{city:"Varanasi",state:"Uttar Pradesh"},{city:"Agra",state:"Uttar Pradesh"},{city:"Meerut",state:"Uttar Pradesh"},{city:"Prayagraj",state:"Uttar Pradesh"},{city:"Bareilly",state:"Uttar Pradesh"},{city:"Gorakhpur",state:"Uttar Pradesh"},
+  {city:"Mumbai",state:"Maharashtra"},{city:"Pune",state:"Maharashtra"},{city:"Nagpur",state:"Maharashtra"},{city:"Nashik",state:"Maharashtra"},{city:"Aurangabad",state:"Maharashtra"},{city:"Thane",state:"Maharashtra"},
+  {city:"Bangalore",state:"Karnataka"},{city:"Mysore",state:"Karnataka"},{city:"Hubli",state:"Karnataka"},{city:"Mangalore",state:"Karnataka"},
+  {city:"Chennai",state:"Tamil Nadu"},{city:"Coimbatore",state:"Tamil Nadu"},{city:"Madurai",state:"Tamil Nadu"},{city:"Salem",state:"Tamil Nadu"},{city:"Tiruchirappalli",state:"Tamil Nadu"},
+  {city:"Hyderabad",state:"Telangana"},{city:"Warangal",state:"Telangana"},{city:"Karimnagar",state:"Telangana"},
+  {city:"Kolkata",state:"West Bengal"},{city:"Howrah",state:"West Bengal"},{city:"Durgapur",state:"West Bengal"},{city:"Siliguri",state:"West Bengal"},
+  {city:"Patna",state:"Bihar"},{city:"Gaya",state:"Bihar"},{city:"Muzaffarpur",state:"Bihar"},
+  {city:"Ranchi",state:"Jharkhand"},{city:"Jamshedpur",state:"Jharkhand"},
+  {city:"Bhopal",state:"Madhya Pradesh"},{city:"Indore",state:"Madhya Pradesh"},{city:"Gwalior",state:"Madhya Pradesh"},{city:"Jabalpur",state:"Madhya Pradesh"},{city:"Ujjain",state:"Madhya Pradesh"},
+  {city:"Ahmedabad",state:"Gujarat"},{city:"Surat",state:"Gujarat"},{city:"Vadodara",state:"Gujarat"},{city:"Rajkot",state:"Gujarat"},
+  {city:"Chandigarh",state:"Chandigarh"},{city:"Shimla",state:"Himachal Pradesh"},{city:"Manali",state:"Himachal Pradesh"},{city:"Dharamshala",state:"Himachal Pradesh"},{city:"Solan",state:"Himachal Pradesh"},
+  {city:"Dehradun",state:"Uttarakhand"},{city:"Haridwar",state:"Uttarakhand"},{city:"Rishikesh",state:"Uttarakhand"},
+  {city:"Amritsar",state:"Punjab"},{city:"Ludhiana",state:"Punjab"},{city:"Jalandhar",state:"Punjab"},{city:"Patiala",state:"Punjab"},
+  {city:"Panaji",state:"Goa"},{city:"Margao",state:"Goa"},
+  {city:"Raipur",state:"Chhattisgarh"},{city:"Bilaspur",state:"Chhattisgarh"},{city:"Durg",state:"Chhattisgarh"},
+  {city:"Imphal",state:"Manipur"},{city:"Aizawl",state:"Mizoram"},{city:"Shillong",state:"Meghalaya"},
+  {city:"Gangtok",state:"Sikkim"},{city:"Itanagar",state:"Arunachal Pradesh"},{city:"Agartala",state:"Tripura"},{city:"Kohima",state:"Nagaland"},
+  {city:"Vishakhapatnam",state:"Andhra Pradesh"},{city:"Vijayawada",state:"Andhra Pradesh"},{city:"Tirupati",state:"Andhra Pradesh"},
+  {city:"Kochi",state:"Kerala"},{city:"Thiruvananthapuram",state:"Kerala"},{city:"Kozhikode",state:"Kerala"},
+  {city:"Bhubaneswar",state:"Odisha"},{city:"Cuttack",state:"Odisha"},{city:"Rourkela",state:"Odisha"},
+  {city:"Guwahati",state:"Assam"},{city:"Dibrugarh",state:"Assam"},{city:"Puducherry",state:"Puducherry"}
+];
+
+const COMMON_ROADS = [
+  "NH 1","NH 2","NH 3","NH 4","NH 5","NH 6","NH 7","NH 8","NH 9","NH 10",
+  "NH 11","NH 12","NH 15","NH 17","NH 19","NH 21","NH 24","NH 27","NH 44",
+  "NH 48","NH 52","NH 58","NH 66","NH 75","NH 76","SH 1","SH 2","SH 3",
+  "Ring Road","Bypass Road","Inner Ring Road","Outer Ring Road",
+  "Jammu-Srinagar Highway","Leh-Manali Highway","Express Highway"
+];
+
+function acHighlight(text, query) {
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return text;
+  return text.slice(0, idx) + "<em>" + text.slice(idx, idx + query.length) + "</em>" + text.slice(idx + query.length);
+}
+
+function makeAutocomplete(inputId, dropId, getItems) {
+  const inp  = el(inputId);
+  const drop = el(dropId);
+  if (!inp || !drop) return;
+  let activeIdx = -1;
+
+  function showDrop(matches, query) {
+    if (!matches.length) { drop.classList.remove("open"); return; }
+    activeIdx = -1;
+    drop.innerHTML = matches.map(m =>
+      `<li data-val="${m.val}">${m.html}</li>`
+    ).join("");
+    drop.classList.add("open");
+    drop.querySelectorAll("li").forEach(li => {
+      li.addEventListener("mousedown", e => {
+        e.preventDefault();
+        inp.value = li.dataset.val;
+        drop.classList.remove("open");
+        inp.dispatchEvent(new CustomEvent("acselect", { detail: li.dataset.val }));
+      });
+    });
+  }
+
+  inp.addEventListener("input", () => {
+    const q = inp.value.trim();
+    if (!q) { drop.classList.remove("open"); return; }
+    showDrop(getItems(q).slice(0, 8), q);
+  });
+
+  inp.addEventListener("keydown", e => {
+    const items = drop.querySelectorAll("li");
+    if (!drop.classList.contains("open") || !items.length) return;
+    if      (e.key === "ArrowDown") { e.preventDefault(); activeIdx = Math.min(activeIdx+1, items.length-1); }
+    else if (e.key === "ArrowUp")   { e.preventDefault(); activeIdx = Math.max(activeIdx-1, 0); }
+    else if (e.key === "Enter" && activeIdx >= 0) {
+      e.preventDefault();
+      inp.value = items[activeIdx].dataset.val;
+      drop.classList.remove("open");
+      inp.dispatchEvent(new CustomEvent("acselect", { detail: items[activeIdx].dataset.val }));
+      return;
+    } else if (e.key === "Escape") { drop.classList.remove("open"); return; }
+    items.forEach((li, i) => li.classList.toggle("ac-active", i === activeIdx));
+    if (activeIdx >= 0) items[activeIdx].scrollIntoView({ block: "nearest" });
+  });
+
+  document.addEventListener("click", e => {
+    if (!inp.contains(e.target) && !drop.contains(e.target)) drop.classList.remove("open");
+  });
+}
+
+// ── Cascading dropdowns: State → City (dataset-locked, no free typing) ───────
+
+// Build STATE_CITY_MAP from CITY_STATE_LIST
+const STATE_CITY_MAP = {};
+CITY_STATE_LIST.forEach(({ city, state }) => {
+  if (!STATE_CITY_MAP[state]) STATE_CITY_MAP[state] = [];
+  if (!STATE_CITY_MAP[state].includes(city)) STATE_CITY_MAP[state].push(city);
+});
+
+// Populate state dropdown from dataset states only
+(function populateStateDropdown() {
+  const sel = el("adminState");
+  if (!sel) return;
+  const states = Object.keys(STATE_CITY_MAP).sort();
+  // Also add states that appear in INDIAN_STATES but have no cities
+  INDIAN_STATES.forEach(s => { if (!STATE_CITY_MAP[s]) STATE_CITY_MAP[s] = []; });
+  const allStates = [...new Set([...Object.keys(STATE_CITY_MAP), ...states])].sort();
+  allStates.forEach(s => {
+    const opt = document.createElement("option");
+    opt.value = s; opt.textContent = s;
+    sel.appendChild(opt);
+  });
+})();
+
+// When state changes → repopulate city dropdown
+el("adminState") && el("adminState").addEventListener("change", function() {
+  const cityEl = el("adminCity");
+  if (!cityEl) return;
+  const cities = STATE_CITY_MAP[this.value] || [];
+  cityEl.innerHTML = "";
+  if (!cities.length) {
+    // State has no cities in dataset — state-level entry only
+    const opt = document.createElement("option");
+    opt.value = ""; opt.textContent = "— State level only —";
+    cityEl.appendChild(opt);
+    cityEl.disabled = true;
+    el("adminCityNote") && (el("adminCityNote").textContent = "(state-level)");
+  } else {
+    const blank = document.createElement("option");
+    blank.value = ""; blank.textContent = "— All cities (state-level) —";
+    cityEl.appendChild(blank);
+    cities.sort().forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c; opt.textContent = c;
+      cityEl.appendChild(opt);
+    });
+    cityEl.disabled = false;
+    el("adminCityNote") && (el("adminCityNote").textContent = "(if applicable)");
+  }
+});
+
+async function loadRoadStatus() {
+  try {
+    const res  = await fetch("/api/admin/road-status");
+    const data = await res.json();
+    roadStatusData = data.rows || [];
+    renderRoadTable(roadStatusData);
+    updateConditionBars(roadStatusData);
+    el("rstatRecords").textContent  = roadStatusData.length;
+    el("rstatLastTrain").textContent = data.last_trained || "Never";
+  } catch (e) {
+    /* API not yet available — show empty state gracefully */
+    roadStatusData = [];
+    renderRoadTable([]);
+    el("rstatRecords").textContent = "0";
+  }
+}
+
+function renderRoadTable(rows) {
+  const body = el("roadStatusBody");
+  if (!body) return;
+  if (!rows.length) {
+    body.innerHTML = '<tr><td colspan="6" class="admin-empty">No entries yet. Add the first one above.</td></tr>';
+    return;
+  }
+  body.innerHTML = rows.map((r, i) => {
+    const condClass = { Dry:"cond-dry", Wet:"cond-wet", Damaged:"cond-damaged", "Under Construction":"cond-construct" }[r.condition] || "";
+    return `<tr>
+      <td>${r.state || "—"}</td>
+      <td>${r.city}</td>
+      <td class="road-name-cell">${r.road_name}</td>
+      <td><span class="cond-badge ${condClass}">${r.condition}</span></td>
+      <td class="date-cell">${r.last_updated || "—"}</td>
+      <td><button class="admin-del-btn" data-idx="${i}" title="Delete">✕</button></td>
+    </tr>`;
+  }).join("");
+
+  body.querySelectorAll(".admin-del-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const idx = parseInt(btn.dataset.idx);
+      roadStatusData.splice(idx, 1);
+      renderRoadTable(roadStatusData);
+      updateConditionBars(roadStatusData);
+      el("rstatRecords").textContent = roadStatusData.length;
+      saveRoadStatus();
+    });
+  });
+}
+
+function updateConditionBars(rows) {
+  const counts = { Dry:0, Wet:0, Damaged:0, "Under Construction":0 };
+  rows.forEach(r => { if (counts[r.condition] !== undefined) counts[r.condition]++; });
+  const total = rows.length || 1;
+  const colors = { Dry:"#2ed573", Wet:"#00b5ff", Damaged:"#ff4757", "Under Construction":"#ffa502" };
+  const container = el("conditionBars");
+  if (!container) return;
+  container.innerHTML = Object.entries(counts).map(([label, count]) => {
+    const pct = Math.round((count / total) * 100);
+    return `<div class="cond-bar-row">
+      <div class="cond-bar-label">${label}</div>
+      <div class="cond-bar-track"><div class="cond-bar-fill" style="width:${pct}%;background:${colors[label]}"></div></div>
+      <div class="cond-bar-val">${count}</div>
+    </div>`;
+  }).join("");
+}
+
+async function saveRoadStatus() {
+  try {
+    await fetch("/api/admin/road-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rows: roadStatusData }),
+    });
+  } catch(e) { /* silent */ }
+}
+
+el("adminAddBtn") && el("adminAddBtn").addEventListener("click", async function() {
+  const state     = (el("adminState") ? el("adminState").value : "").trim();
+  const city      = (el("adminCity") ? el("adminCity").value : "").trim();
+  const roadName  = (el("adminRoadName") ? el("adminRoadName").value : "").trim();
+  const condition = el("adminCondition").value;
+  const date      = el("adminDate").value || new Date().toISOString().split("T")[0];
+
+  if (!state) { alert("Please select a State."); return; }
+  if (!roadName) { alert("Please select a Road Type."); return; }
+
+  setLoading(this, true);
+
+  // Match on state + city + road type (city can be blank = state-level)
+  const existing = roadStatusData.findIndex(r =>
+    r.state === state &&
+    (r.city || "") === city &&
+    (r.road_name || "") === roadName
+  );
+  const entry = { state, city, road_name: roadName, condition, last_updated: date };
+  if (existing >= 0) { roadStatusData[existing] = entry; } else { roadStatusData.push(entry); }
+  await saveRoadStatus();
+  renderRoadTable(roadStatusData);
+  updateConditionBars(roadStatusData);
+  el("rstatRecords").textContent = roadStatusData.length;
+
+  // Reset — state stays, clear city back to blank
+  if (el("adminCity")) { el("adminCity").value = ""; }
+  setLoading(this, false);
+});
+
+el("retrainBtn") && el("retrainBtn").addEventListener("click", async function() {
+  setLoading(this, true);
+  const logEl = el("retrainLog");
+  const row   = el("retrainStatusRow");
+  row.style.display = "block";
+  logEl.innerHTML = '<span class="retrain-line">⟳ Initiating retrain sequence…</span>';
+
+  const steps = [
+    "📂 Reading road_status.csv…",
+    "🔧 Merging with local features…",
+    "🤖 Fitting RandomForest model…",
+    "💾 Writing model.pkl…",
+    "📊 Updating local_features.csv…",
+    "✅ Retrain complete.",
+  ];
+
+  try {
+    /* Show log steps while API call runs */
+    let i = 0;
+    const logTimer = setInterval(() => {
+      if (i < steps.length - 1) {
+        logEl.innerHTML += `<span class="retrain-line">${steps[i]}</span>`;
+        logEl.scrollTop = logEl.scrollHeight;
+        i++;
+      }
+    }, 600);
+
+    const res  = await fetch("/api/admin/retrain", { method: "POST" });
+    const data = await res.json();
+    clearInterval(logTimer);
+
+    if (data.error) throw new Error(data.error);
+    logEl.innerHTML += `<span class="retrain-line retrain-ok">${steps[steps.length-1]}</span>`;
+    el("rstatLastTrain").textContent = new Date().toLocaleDateString("en-IN");
+    el("rstatStatus").textContent    = "UPDATED";
+    el("rstatStatus").style.color    = "#2ed573";
+  } catch(err) {
+    logEl.innerHTML += `<span class="retrain-line retrain-err">✕ ${err.message}</span>`;
+    el("rstatStatus").textContent = "ERROR";
+    el("rstatStatus").style.color = "#ff4757";
+  } finally {
+    setLoading(this, false);
+  }
+});
 
 
 /* ============================================================
