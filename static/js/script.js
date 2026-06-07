@@ -390,26 +390,20 @@ el("stateSelect").addEventListener("change", function () {
     cityDropdown.appendChild(opt);
   });
 
-  /* Auto-fetch weather for first city when state changes */
   const firstCity = (cityData[this.value] || [])[0];
   if (firstCity) {
     const dateIn = el("travelDateInput");
     fetchWeather(firstCity, "predict", dateIn ? dateIn.value : null);
   }
+
+  const rtype = document.querySelector('select[name="road_type"]');
+  if (rtype) fetchRoadStatus(this.value, el("citySelect").value, rtype.value);
 });
 
-// citySelect change is handled in the road status section below
-
-
-/* When road type changes → re-fetch road status for state + city + road type */
+// citySelect change is handled below
 const roadTypeSelectEl = document.querySelector('select[name="road_type"]');
 roadTypeSelectEl && roadTypeSelectEl.addEventListener("change", function () {
   fetchRoadStatus(el("stateSelect").value, el("citySelect").value, this.value);
-});
-
-el("stateSelect").addEventListener("change", function () {
-  const rtype = document.querySelector('select[name="road_type"]');
-  if (rtype) fetchRoadStatus(this.value, el("citySelect").value, rtype.value);
 });
 
 el("citySelect") && el("citySelect").addEventListener("change", function () {
@@ -468,60 +462,6 @@ async function fetchRoadStatus(state, city, roadType) {
       el("roadStatusOverrideBtn") && el("roadStatusOverrideBtn").addEventListener("click", () => {
         if (roadCondManual) roadCondManual.style.display = "";
         if (roadCondHidden) roadCondHidden.disabled = true;
-        if (roadCondSelect && entry.condition) roadCondSelect.value = entry.condition;
-        chipEl.style.display = "none";
-      });
-    }
-  } catch(e) {
-    if (roadCondManual) roadCondManual.style.display = "";
-    if (roadCondHidden) roadCondHidden.disabled = true;
-  }
-}
-  const roadCondHidden  = el("roadCondHidden");
-  const roadCondManual  = el("roadCondManualWrap");
-  const roadCondSelect  = el("roadCondSelect");
-  const chipEl          = el("roadStatusChip");
-
-  // Reset
-  if (roadCondManual) roadCondManual.style.display = "none";
-  if (roadCondHidden) { roadCondHidden.disabled = false; roadCondHidden.value = "Dry"; }
-  if (chipEl)         chipEl.style.display = "none";
-
-  if (!state || !roadType) {
-    if (roadCondManual) roadCondManual.style.display = "";
-    if (roadCondHidden) roadCondHidden.disabled = true;
-    return;
-  }
-
-  try {
-    const res     = await fetch(`/api/road-status-lookup?state=${encodeURIComponent(state)}&road_type=${encodeURIComponent(roadType)}`);
-    const data    = await res.json();
-    const entries = data.entries || [];
-    const entry   = entries[0];
-
-    if (!entry) {
-      // No admin data — show manual select
-      if (roadCondManual) roadCondManual.style.display = "";
-      if (roadCondHidden) roadCondHidden.disabled = true;
-      return;
-    }
-
-    // Auto-fill hidden input, hide manual select
-    if (roadCondHidden) { roadCondHidden.value = entry.condition; roadCondHidden.disabled = false; }
-    if (roadCondManual) roadCondManual.style.display = "none";
-
-    // Show chip
-    if (chipEl) {
-      chipEl.style.display = "flex";
-      chipEl.innerHTML = `
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        Road data from admin &nbsp;·&nbsp; <strong>${entry.road_type}</strong> &nbsp;·&nbsp; <strong>${entry.condition}</strong>
-        ${entry.updated ? `<span style="opacity:.5;font-size:10px;margin-left:4px">· ${entry.updated}</span>` : ""}
-        <button id="roadStatusOverrideBtn" style="margin-left:8px;background:none;border:none;color:var(--accent);cursor:pointer;font-size:10px;padding:0;opacity:.7">unlock</button>
-      `;
-      el("roadStatusOverrideBtn") && el("roadStatusOverrideBtn").addEventListener("click", () => {
-        if (roadCondManual) { roadCondManual.style.display = ""; }
-        if (roadCondHidden) { roadCondHidden.disabled = true; }
         if (roadCondSelect && entry.condition) roadCondSelect.value = entry.condition;
         chipEl.style.display = "none";
       });
